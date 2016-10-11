@@ -1,6 +1,6 @@
-name := """play-slick-3.0"""
+name := """airbnb-scrapper"""
 
-version := "1.1-SNAPSHOT"
+version := "1.0-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 

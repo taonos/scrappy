@@ -1,7 +1,7 @@
 import javax.inject.{Inject, Provider, Singleton}
 
-import com.example.user.slick.SlickUserDAO
-import com.example.user.{UserDAO, UserDAOExecutionContext}
+import com.airbnbData.dao.slick.SlickUserDAO
+import com.airbnbData.dao.{UserDAO, UserDAOExecutionContext}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.api.inject.ApplicationLifecycle

@@ -1,15 +1,16 @@
-package com.example.user.slick
+package com.airbnbData.dao.slick
 
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import org.joda.time.DateTime
-import slick.driver.JdbcProfile
 import slick.jdbc.JdbcBackend.Database
-import com.example.user._
+import com.airbnbData.dao._
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
+
+
 
 /**
  * A User DAO implemented with Slick, leveraging Slick code gen.
@@ -17,10 +18,10 @@ import scala.language.implicitConversions
  * Note that you must run "flyway/flywayMigrate" before "compile" here.
  */
 @Singleton
-class SlickUserDAO @Inject()(db: Database) extends UserDAO with Tables {
+class SlickUserDAO @Inject()(db: Database) extends UserDAO with Profile with UsersComponent {
 
   // Use the custom postgresql driver.
-  override val profile: JdbcProfile = MyPostgresDriver
+  override val profile: MyPostgresDriver = MyPostgresDriver
 
   import profile.api._
 
@@ -29,12 +30,12 @@ class SlickUserDAO @Inject()(db: Database) extends UserDAO with Tables {
 
   def lookup(id: UUID)(implicit ec: UserDAOExecutionContext): Future[Option[User]] = {
     val f: Future[Option[UsersRow]] = db.run(queryById(id).result.headOption)
-    f.map(maybeRow => maybeRow.map(usersRowToUser(_)))
+    f.map(maybeRow => maybeRow.map(usersRowToUser))
   }
 
   def all(implicit ec: UserDAOExecutionContext): Future[Seq[User]] = {
     val f = db.run(Users.result)
-    f.map(seq => seq.map(usersRowToUser(_)))
+    f.map(seq => seq.map(usersRowToUser))
   }
 
   def update(user: User)(implicit ec: UserDAOExecutionContext): Future[Int] = {

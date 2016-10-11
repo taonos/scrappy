@@ -4,7 +4,7 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
-import com.example.user.{User, UserDAO, UserDAOExecutionContext}
+import com.airbnbData.dao.{User, UserDAO, UserDAOExecutionContext}
 import play.api.mvc._
 
 @Singleton

@@ -1,0 +1,23 @@
+CREATE TABLE properties (
+  id bigint PRIMARY KEY NOT NULL,
+  bathrooms integer NOT NULL DEFAULT 0,
+  bedrooms integer NOT NULL DEFAULT 0,
+  beds integer NOT NULL DEFAULT 0,
+  city character varying(50) NOT NULL,
+  instant_bookable boolean NOT NULL DEFAULT false,
+  is_business_travel_ready boolean NOT NULL DEFAULT false,
+  is_new_listing boolean NOT NULL DEFAULT false,
+  geopoint point NOT NULL,
+  name character varying(200) NOT NULL,
+  person_capacity integer NOT NULL DEFAULT 0,
+  property_type character varying NOT NULL,
+  public_address character varying(200) NOT NULL,
+  room_type character varying(70) NOT NULL,
+  document jsonb NOT NULL,
+  summary text NOT NULL,
+  address character varying(200) NOT NULL,
+  description text NOT NULL,
+  airbnb_url character varying(2038) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ NULL
+)
