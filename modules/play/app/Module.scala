@@ -1,7 +1,7 @@
 import javax.inject.{Inject, Provider, Singleton}
 
-import com.airbnbData.dao.slick.SlickUserDAO
-import com.airbnbData.dao.{UserDAO, UserDAOExecutionContext}
+import com.airbnbData.model.slick.SlickUserRepo
+import com.airbnbData.model.{UserRepo, UserRepoExecutionContext}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.api.inject.ApplicationLifecycle
@@ -14,10 +14,10 @@ class Module(environment: Environment,
   override def configure(): Unit = {
 
     bind(classOf[Config]).toInstance(configuration.underlying)
-    bind(classOf[UserDAOExecutionContext]).toProvider(classOf[SlickUserDAOExecutionContextProvider])
+    bind(classOf[UserRepoExecutionContext]).toProvider(classOf[SlickUserDAOExecutionContextProvider])
 
     bind(classOf[slick.jdbc.JdbcBackend.Database]).toProvider(classOf[DatabaseProvider])
-    bind(classOf[UserDAO]).to(classOf[SlickUserDAO])
+    bind(classOf[UserRepo]).to(classOf[SlickUserRepo])
 
     bind(classOf[UserDAOCloseHook]).asEagerSingleton()
   }
@@ -32,7 +32,7 @@ class DatabaseProvider @Inject() (config: Config) extends Provider[slick.jdbc.Jd
 }
 
 @Singleton
-class SlickUserDAOExecutionContextProvider @Inject() (actorSystem: akka.actor.ActorSystem) extends Provider[UserDAOExecutionContext] {
+class SlickUserDAOExecutionContextProvider @Inject() (actorSystem: akka.actor.ActorSystem) extends Provider[UserRepoExecutionContext] {
   private val instance = {
     val ec = actorSystem.dispatchers.lookup("myapp.database-dispatcher")
     new SlickUserDAOExecutionContext(ec)
@@ -41,14 +41,14 @@ class SlickUserDAOExecutionContextProvider @Inject() (actorSystem: akka.actor.Ac
   override def get() = instance
 }
 
-class SlickUserDAOExecutionContext(ec: ExecutionContext) extends UserDAOExecutionContext {
+class SlickUserDAOExecutionContext(ec: ExecutionContext) extends UserRepoExecutionContext {
   override def execute(runnable: Runnable): Unit = ec.execute(runnable)
 
   override def reportFailure(cause: Throwable): Unit = ec.reportFailure(cause)
 }
 
 /** Closes database connections safely.  Important on dev restart. */
-class UserDAOCloseHook @Inject()(dao: UserDAO, lifecycle: ApplicationLifecycle) {
+class UserDAOCloseHook @Inject()(dao: UserRepo, lifecycle: ApplicationLifecycle) {
   private val logger = org.slf4j.LoggerFactory.getLogger("application")
 
   lifecycle.addStopHook { () =>

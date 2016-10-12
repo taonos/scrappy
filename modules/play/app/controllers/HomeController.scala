@@ -4,11 +4,11 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
-import com.airbnbData.dao.{User, UserDAO, UserDAOExecutionContext}
+import com.airbnbData.model.{User, UserRepo, UserRepoExecutionContext}
 import play.api.mvc._
 
 @Singleton
-class HomeController @Inject() (userDAO: UserDAO, userDAOExecutionContext: UserDAOExecutionContext) extends Controller {
+class HomeController @Inject() (userDAO: UserRepo, userDAOExecutionContext: UserRepoExecutionContext) extends Controller {
 
   private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
