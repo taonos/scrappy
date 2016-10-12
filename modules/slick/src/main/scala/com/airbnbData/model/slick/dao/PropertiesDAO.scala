@@ -13,7 +13,7 @@ trait PropertiesDAO { self: Profile =>
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
 
-  /** Entity class storing rows of table Property
+  /** Entity class storing rows of table Properties
     *  @param id Database column id SqlType(int8), PrimaryKey
     *  @param bathrooms Database column bathrooms SqlType(int4), Default(0)
     *  @param bedrooms Database column bedrooms SqlType(int4), Default(0)
@@ -41,8 +41,8 @@ trait PropertiesDAO { self: Profile =>
   //    prs => import prs._
   //      PropertyRow.tupled((<<[Long], <<[Int], <<[Int], <<[Int], <<[String], <<[Boolean], <<[Boolean], <<[Boolean], <<[String], <<[String], <<[Int], <<[String], <<[String], <<[String], <<[String], <<[String], <<[String], <<[String], <<[String], <<[DateTime], <<?[DateTime]))
   //  }
-  /** Table description of table property. Objects of this class serve as prototypes for rows in queries. */
-  class PropertiesTable(_tableTag: Tag) extends Table[PropertyRow](_tableTag, "property") {
+  /** Table description of table properties. Objects of this class serve as prototypes for rows in queries. */
+  protected class PropertiesTable(_tableTag: Tag) extends Table[PropertyRow](_tableTag, "property") {
     def * = (id, bathrooms, bedrooms, beds, city, instantBookable, isBusinessTravelReady, isNewListing, geopoint, name, personCapacity, propertyType, publicAddress, roomType, document, summary, address, description, airbnbUrl, createdAt, updatedAt) <> (PropertyRow.tupled, PropertyRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(bathrooms), Rep.Some(bedrooms), Rep.Some(beds), Rep.Some(city), Rep.Some(instantBookable), Rep.Some(isBusinessTravelReady), Rep.Some(isNewListing), Rep.Some(geopoint), Rep.Some(name), Rep.Some(personCapacity), Rep.Some(propertyType), Rep.Some(publicAddress), Rep.Some(roomType), Rep.Some(document), Rep.Some(summary), Rep.Some(address), Rep.Some(description), Rep.Some(airbnbUrl), Rep.Some(createdAt), updatedAt).shaped.<>({r=>import r._; _1.map(_=> PropertyRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13.get, _14.get, _15.get, _16.get, _17.get, _18.get, _19.get, _20.get, _21)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
@@ -90,7 +90,7 @@ trait PropertiesDAO { self: Profile =>
     /** Database column updated_at SqlType(timestamptz), Default(None) */
     val updatedAt: Rep[Option[DateTime]] = column[Option[DateTime]]("updated_at", O.Default(None))
   }
-  /** Collection-like TableQuery object for table Property */
-  lazy val Property = new TableQuery(tag => new PropertiesTable(tag))
+  /** Collection-like TableQuery object for table PropertyTable */
+  lazy val Properties = new TableQuery(tag => new PropertiesTable(tag))
 
 }

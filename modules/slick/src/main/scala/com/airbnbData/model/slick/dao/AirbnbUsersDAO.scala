@@ -13,7 +13,7 @@ trait AirbnbUsersDAO { self: Profile =>
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
 
-  /** Entity class storing rows of table AirbnbUser
+  /** Entity class storing rows of table AirbnbUsers
     *  @param id Database column id SqlType(int8), PrimaryKey
     *  @param firstName Database column first_name SqlType(varchar), Length(50,true)
     *  @param about Database column about SqlType(text)
@@ -27,7 +27,7 @@ trait AirbnbUsersDAO { self: Profile =>
   //      AirbnbUserRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<[DateTime], <<?[DateTime]))
   //  }
   /** Table description of table airbnb_user. Objects of this class serve as prototypes for rows in queries. */
-  class AirbnbUsersTable(_tableTag: Tag) extends Table[AirbnbUserRow](_tableTag, "airbnb_user") {
+  protected class AirbnbUsersTable(_tableTag: Tag) extends Table[AirbnbUserRow](_tableTag, "airbnb_user") {
     def * = (id, firstName, about, document, createdAt, updatedAt) <> (AirbnbUserRow.tupled, AirbnbUserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(firstName), Rep.Some(about), Rep.Some(document), Rep.Some(createdAt), updatedAt).shaped.<>({r=>import r._; _1.map(_=> AirbnbUserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
@@ -45,6 +45,6 @@ trait AirbnbUsersDAO { self: Profile =>
     /** Database column updated_at SqlType(timestamptz), Default(None) */
     val updatedAt: Rep[Option[DateTime]] = column[Option[DateTime]]("updated_at", O.Default(None))
   }
-  /** Collection-like TableQuery object for table AirbnbUser */
-  lazy val AirbnbUser = new TableQuery(tag => new AirbnbUsersTable(tag))
+  /** Collection-like TableQuery object for table AirbnbUsersTable */
+  lazy val AirbnbUsers = new TableQuery(tag => new AirbnbUsersTable(tag))
 }
