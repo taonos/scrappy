@@ -1,6 +1,6 @@
 package com.airbnbData.model.slick.dao
 
-import com.airbnbData.model.slick.helper._
+import java.net.URL
 
 /**
   * Created by Lance on 2016-10-12.
@@ -35,7 +35,7 @@ trait PropertiesDAO { self: Profile =>
     *  @param airbnbUrl Database column airbnb_url SqlType(varchar), Length(2038,true)
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
-  case class PropertyRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, instantBookable: Boolean = false, isBusinessTravelReady: Boolean = false, isNewListing: Boolean = false, geopoint: Point, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: JsValue, summary: String, address: String, description: String, airbnbUrl: String, createdAt: DateTime, updatedAt: Option[DateTime] = None)
+  case class PropertyRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, instantBookable: Boolean = false, isBusinessTravelReady: Boolean = false, isNewListing: Boolean = false, geopoint: Point, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: JsValue, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: DateTime, updatedAt: Option[DateTime] = None)
   //  /** GetResult implicit for fetching PropertyRow objects using plain SQL queries */
   //  implicit def GetResultPropertyRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Boolean], e4: GR[DateTime], e5: GR[Option[DateTime]]): GR[PropertyRow] = GR{
   //    prs => import prs._
@@ -84,7 +84,7 @@ trait PropertiesDAO { self: Profile =>
     /** Database column description SqlType(text) */
     val description: Rep[String] = column[String]("description")
     /** Database column airbnb_url SqlType(varchar), Length(2038,true) */
-    val airbnbUrl: Rep[String] = column[String]("airbnb_url", O.Length(2038,varying=true))
+    val airbnbUrl: Rep[URL] = column[URL]("airbnb_url", O.Length(2038,varying=true))
     /** Database column created_at SqlType(timestamptz) */
     val createdAt: Rep[DateTime] = column[DateTime]("created_at")
     /** Database column updated_at SqlType(timestamptz), Default(None) */

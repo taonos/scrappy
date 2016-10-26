@@ -2,6 +2,7 @@ package com.airbnbData.model.slick
 
 import com.github.tminglei.slickpg._
 import play.api.libs.json.{JsValue, Json}
+import java.net.URL
 
 /**
  * A postgresql driver with extended Joda and JSON support.
@@ -37,6 +38,11 @@ trait MyPostgresDriver extends ExPostgresDriver
         (v) => utils.SimpleArrayUtils.mkString[JsValue](_.toString())(v)
       ).to(_.toList)
 
+    // Mapping between String and URL
+    implicit val strURLTypeMapper = MappedColumnType.base[URL, String](
+      url => url.toString,
+      str => new URL(str)
+    )
   }
 
   // jsonb support is in postgres 9.4.0 onward; for 9.3.x use "json"
