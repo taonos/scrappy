@@ -5,25 +5,6 @@ import play.api.libs.json.JsValue
 import com.vividsolutions.jts.geom.Point
 import java.net.URL
 
-import scala.concurrent.{ExecutionContext, Future}
-
-/**
-  * An implementation dependent DAO.  This could be implemented by Slick, Cassandra, or a REST API.
-  */
-trait PropertyRepo extends Repository {
-
-  def lookup(id: Long)(implicit ec: PropertyRepoExecutionContext): Future[Option[Property]]
-
-  def all(implicit ec: PropertyRepoExecutionContext): Future[Seq[Property]]
-
-  def update(user: Property)(implicit ec: PropertyRepoExecutionContext): Future[Int]
-
-  def delete(id: Long)(implicit ec: PropertyRepoExecutionContext): Future[Int]
-
-  def create(user: Property)(implicit ec: PropertyRepoExecutionContext): Future[Int]
-
-  def close(): Future[Unit]
-}
 
 /**
   * Implementation independent aggregate root.
@@ -56,7 +37,3 @@ case class Property(
                      updatedAt: Option[DateTime]
                    )
 
-/**
-  * Type safe execution context for operations on PropertyRepo.
-  */
-trait PropertyRepoExecutionContext extends ExecutionContext

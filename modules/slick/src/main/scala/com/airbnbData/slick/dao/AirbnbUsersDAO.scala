@@ -1,15 +1,14 @@
-package com.airbnbData.model.slick.dao
+package com.airbnbData.slick.dao
 
-import com.airbnbData.model.slick.helper._
+import com.airbnbData.slick.dao.helper.{PK, Profile}
 
 /**
   * Created by Lance on 2016-10-12.
   */
 trait AirbnbUsersDAO { self: Profile =>
-  import profile.api._
-
   import org.joda.time.DateTime
   import play.api.libs.json.JsValue
+  import profile.api._
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
 

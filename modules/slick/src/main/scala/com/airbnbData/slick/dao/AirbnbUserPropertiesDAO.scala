@@ -1,14 +1,14 @@
-package com.airbnbData.model.slick.dao
+package com.airbnbData.slick.dao
 
-import com.airbnbData.model.slick.helper._
+import com.airbnbData.slick.dao.helper.{PK, Profile}
+import slick.model
 
 /**
   * Created by Lance on 2016-10-12.
   */
 trait AirbnbUserPropertiesDAO extends AirbnbUsersDAO with PropertiesDAO { self: Profile =>
-  import profile.api._
-
   import org.joda.time.DateTime
+  import profile.api._
   import slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
@@ -43,9 +43,9 @@ trait AirbnbUserPropertiesDAO extends AirbnbUsersDAO with PropertiesDAO { self: 
     val pk = primaryKey("user_property_pkey", (propertyId, userId))
 
     /** Foreign key referencing AirbnbUser (database name user_id_FK) */
-    lazy val airbnbUserFk = foreignKey("user_id_FK", userId, AirbnbUsers)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Restrict)
+    lazy val airbnbUserFk = foreignKey("user_id_FK", userId, AirbnbUsers)(r => r.id, onUpdate=model.ForeignKeyAction.NoAction, onDelete=model.ForeignKeyAction.Restrict)
     /** Foreign key referencing Property (database name property_id_FK) */
-    lazy val propertyFk = foreignKey("property_id_FK", propertyId, Properties)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Restrict)
+    lazy val propertyFk = foreignKey("property_id_FK", propertyId, Properties)(r => r.id, onUpdate=model.ForeignKeyAction.NoAction, onDelete=model.ForeignKeyAction.Restrict)
   }
   /** Collection-like TableQuery object for table AirbnbUserPropertiesTable */
   lazy val AirbnbUserProperties = new TableQuery(tag => new AirbnbUserPropertiesTable(tag))

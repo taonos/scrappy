@@ -1,8 +1,9 @@
-package com.airbnbData.model.slick
+package com.airbnbData.slick.dao.helper
+
+import java.net.URL
 
 import com.github.tminglei.slickpg._
 import play.api.libs.json.{JsValue, Json}
-import java.net.URL
 
 /**
  * A postgresql driver with extended Joda and JSON support.

@@ -1,6 +1,4 @@
-package com.airbnbData.model.slick.dao
-
-import com.airbnbData.model.slick.MyPostgresDriver
+package com.airbnbData.slick.dao.helper
 
 /**
   * Created by Lance on 2016-10-12.

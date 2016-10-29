@@ -1,4 +1,4 @@
-package com.airbnbData.model.slick.helper
+package com.airbnbData.slick.dao.helper
 
 import slick.lifted.MappedTo
 

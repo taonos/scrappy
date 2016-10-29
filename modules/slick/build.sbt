@@ -3,6 +3,7 @@ import slick.{ model => m }
 
 val slickPgVersion = "0.14.3"
 val slickVersion = "3.1.1"
+lazy val scalazVersion = "7.2.7"
 
 scalaVersion := "2.11.8"
 
@@ -17,7 +18,9 @@ libraryDependencies ++= Seq(
   "com.github.tminglei" %% "slick-pg_joda-time" % slickPgVersion,
   "com.github.tminglei" %% "slick-pg_jts" % slickPgVersion,
   "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
-  "com.typesafe.play" % "play-json_2.11" % "2.5.9"
+  "com.typesafe.play" % "play-json_2.11" % "2.5.9",
+  "org.scalaz" %% "scalaz-core" % scalazVersion,
+  "org.scalaz" %% "scalaz-concurrent" % scalazVersion
 )
 
 

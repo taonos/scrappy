@@ -1,60 +1,66 @@
 import javax.inject.{Inject, Provider, Singleton}
 
-import com.airbnbData.model.slick.SlickUserRepo
-import com.airbnbData.model.{UserRepo, UserRepoExecutionContext}
-import com.google.inject.AbstractModule
+import com.google.inject.{AbstractModule, TypeLiteral}
 import com.typesafe.config.Config
-import play.api.inject.ApplicationLifecycle
-import play.api.{Configuration, Environment}
 
 import scala.concurrent.{ExecutionContext, Future}
+import slick.jdbc.JdbcBackend.Database
+import play.api.inject.ApplicationLifecycle
+import play.api.{Configuration, Environment}
+import com.airbnbData.service._
+import com.airbnbData.model.User
+import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
+import com.airbnbData.service.interpreter.UserServiceInterpreter
+import com.airbnbData.slick.repository.interpreter.SlickUserRepositoryInterpreter
 
 class Module(environment: Environment,
              configuration: Configuration) extends AbstractModule {
   override def configure(): Unit = {
 
     bind(classOf[Config]).toInstance(configuration.underlying)
-    bind(classOf[UserRepoExecutionContext]).toProvider(classOf[SlickUserDAOExecutionContextProvider])
+    bind(classOf[UserRepositoryExecutionContext]).toProvider(classOf[SlickUserRepositoryExecutionContextProvider])
 
-    bind(classOf[slick.jdbc.JdbcBackend.Database]).toProvider(classOf[DatabaseProvider])
-    bind(classOf[UserRepo]).to(classOf[SlickUserRepo])
+    bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
+    bind(classOf[UserRepository]).to(classOf[SlickUserRepositoryInterpreter])
 
-    bind(classOf[UserDAOCloseHook]).asEagerSingleton()
+    bind(new TypeLiteral[UserService[User]] {}).to(classOf[UserServiceInterpreter])
+
+    bind(classOf[UserRepositoryCloseHook]).asEagerSingleton()
   }
 }
 
 @Singleton
-class DatabaseProvider @Inject() (config: Config) extends Provider[slick.jdbc.JdbcBackend.Database] {
+class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
 
-  private val db = slick.jdbc.JdbcBackend.Database.forConfig("myapp.database", config)
+  private val db = Database.forConfig("myapp.database", config)
 
-  override def get(): slick.jdbc.JdbcBackend.Database = db
+  override def get(): Database = db
 }
 
 @Singleton
-class SlickUserDAOExecutionContextProvider @Inject() (actorSystem: akka.actor.ActorSystem) extends Provider[UserRepoExecutionContext] {
+class SlickUserRepositoryExecutionContextProvider @Inject()(actorSystem: akka.actor.ActorSystem) extends Provider[UserRepositoryExecutionContext] {
   private val instance = {
     val ec = actorSystem.dispatchers.lookup("myapp.database-dispatcher")
-    new SlickUserDAOExecutionContext(ec)
+    new SlickUserRepositoryExecutionContext(ec)
   }
 
   override def get() = instance
 }
 
-class SlickUserDAOExecutionContext(ec: ExecutionContext) extends UserRepoExecutionContext {
+class SlickUserRepositoryExecutionContext(ec: ExecutionContext) extends UserRepositoryExecutionContext {
   override def execute(runnable: Runnable): Unit = ec.execute(runnable)
 
   override def reportFailure(cause: Throwable): Unit = ec.reportFailure(cause)
 }
 
 /** Closes database connections safely.  Important on dev restart. */
-class UserDAOCloseHook @Inject()(dao: UserRepo, lifecycle: ApplicationLifecycle) {
+class UserRepositoryCloseHook @Inject()(repo: UserRepository, lifecycle: ApplicationLifecycle) {
   private val logger = org.slf4j.LoggerFactory.getLogger("application")
 
   lifecycle.addStopHook { () =>
     Future.successful {
       logger.info("Now closing database connections!")
-      dao.close()
+      repo.close()
     }
   }
 }

@@ -3,3 +3,4 @@
 //TwirlKeys.templateImports += "com.airbnbData.dao.User"
 
 scalaVersion := "2.11.8"
+routesGenerator := InjectedRoutesGenerator

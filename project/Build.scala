@@ -8,7 +8,7 @@ object Common extends AutoPlugin {
   override def requires = JvmPlugin
 
   override def projectSettings = Seq(
-    scalaVersion := "2.11.7",
+    scalaVersion := "2.11.8",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions ++= Seq(
       "-encoding", "UTF-8", // yes, this is 2 args

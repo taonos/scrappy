@@ -1,6 +1,8 @@
-package com.airbnbData.model.slick.dao
+package com.airbnbData.slick.dao
 
 import java.net.URL
+
+import com.airbnbData.slick.dao.helper.Profile
 
 /**
   * Created by Lance on 2016-10-12.
