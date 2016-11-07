@@ -1,9 +1,10 @@
 import slick.codegen.SourceCodeGenerator
 import slick.{ model => m }
 
-val slickPgVersion = "0.14.3"
-val slickVersion = "3.1.1"
+lazy val slickPgVersion = "0.14.3"
+lazy val slickVersion = "3.1.1"
 lazy val scalazVersion = "7.2.7"
+lazy val playVersion = "2.5.9"
 
 scalaVersion := "2.11.8"
 
@@ -18,7 +19,8 @@ libraryDependencies ++= Seq(
   "com.github.tminglei" %% "slick-pg_joda-time" % slickPgVersion,
   "com.github.tminglei" %% "slick-pg_jts" % slickPgVersion,
   "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
-  "com.typesafe.play" % "play-json_2.11" % "2.5.9",
+  "com.typesafe.play" % "play-json_2.11" % playVersion,
+  "com.typesafe.play" %% "play-ws" % playVersion,
   "org.scalaz" %% "scalaz-core" % scalazVersion,
   "org.scalaz" %% "scalaz-concurrent" % scalazVersion
 )

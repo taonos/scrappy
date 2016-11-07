@@ -9,9 +9,9 @@ import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Environment}
 import com.airbnbData.service._
 import com.airbnbData.model.User
-import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
-import com.airbnbData.service.interpreter.UserServiceInterpreter
-import com.airbnbData.slick.repository.interpreter.SlickUserRepositoryInterpreter
+import com.airbnbData.repository._
+import com.airbnbData.service.interpreter._
+import com.airbnbData.slick.repository.interpreter._
 
 class Module(environment: Environment,
              configuration: Configuration) extends AbstractModule {
@@ -22,8 +22,10 @@ class Module(environment: Environment,
 
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
     bind(classOf[UserRepository]).to(classOf[SlickUserRepositoryInterpreter])
+    bind(classOf[AirbnbScrapRepository]).to(classOf[WSAirbnbScrapRepositoryInterpreter])
 
     bind(new TypeLiteral[UserService[User]] {}).to(classOf[UserServiceInterpreter])
+    bind(classOf[AirbnbScrapService]).to(classOf[AirbnbScrapServiceInterpreter])
 
     bind(classOf[UserRepositoryCloseHook]).asEagerSingleton()
   }

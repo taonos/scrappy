@@ -1,13 +1,20 @@
 package com.airbnbData.service
 
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz._
+import scalaz.Kleisli
 
 import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
 
 /**
   * Created by Lance on 2016-10-26.
   */
+//trait RepositoryAndContext[Repository, ExecutionContext] {
+//  val repository: Repository
+//  val context: ExecutionContext
+//}
+
+
+
 trait Service {}
 
 trait UserService[User] extends Service {

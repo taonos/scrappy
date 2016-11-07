@@ -4,6 +4,11 @@
 @main("Title Page") {
     <h2>Users</h2>
 
+    <div>
+        <span>Click to fetch data from airbnb: </span>
+        <a href="@controllers.routes.FetchController.download()">Fetch</a>
+    </div>
+
     <table>
         <tr>
             <th>Id</th>

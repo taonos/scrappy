@@ -4,3 +4,6 @@
 
 scalaVersion := "2.11.8"
 routesGenerator := InjectedRoutesGenerator
+libraryDependencies ++= Seq(
+  ws
+)
