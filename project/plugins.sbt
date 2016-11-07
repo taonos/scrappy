@@ -1,6 +1,6 @@
-resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
+//resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+//resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 resolvers += "Flyway" at "https://flywaydb.org/repo"
 
@@ -15,3 +15,5 @@ libraryDependencies += "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
 
 // The Play plugin
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.9")
+
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M14-6")
