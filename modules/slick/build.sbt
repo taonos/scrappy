@@ -5,24 +5,39 @@ lazy val slickPgVersion = "0.14.3"
 lazy val slickVersion = "3.1.1"
 lazy val scalazVersion = "7.2.7"
 lazy val playVersion = "2.5.9"
+lazy val circeVersion = "0.5.1"
 
 scalaVersion := "2.11.8"
 
 
-libraryDependencies ++= Seq(
+libraryDependencies ++=
+  Seq(
+    "io.circe" %% "circe-core",
+    "io.circe" %% "circe-generic",
+    "io.circe" %% "circe-parser"
+  ).map(_ % circeVersion) ++
+  Seq(
+    "com.typesafe.slick" %% "slick",
+    "com.typesafe.slick" %% "slick-hikaricp"
+  ).map(_ % slickVersion) ++
+  Seq(
+    "com.github.tminglei" %% "slick-pg",
+    "com.github.tminglei" %% "slick-pg_play-json",
+    "com.github.tminglei" %% "slick-pg_joda-time",
+    "com.github.tminglei" %% "slick-pg_jts"
+  ).map(_ % slickPgVersion) ++
+  Seq(
+    "com.typesafe.play" % "play-json_2.11",
+    "com.typesafe.play" %% "play-ws"
+  ).map(_ % playVersion) ++
+  Seq(
+    "org.scalaz" %% "scalaz-core",
+    "org.scalaz" %% "scalaz-concurrent"
+  ).map(_ % scalazVersion) ++
+  Seq(
   "com.zaxxer" % "HikariCP" % "2.5.1",
-  "com.typesafe.slick" %% "slick" % slickVersion,
-  "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
   "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
-  "com.github.tminglei" %% "slick-pg" % slickPgVersion,
-  "com.github.tminglei" %% "slick-pg_play-json" % slickPgVersion,
-  "com.github.tminglei" %% "slick-pg_joda-time" % slickPgVersion,
-  "com.github.tminglei" %% "slick-pg_jts" % slickPgVersion,
-  "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
-  "com.typesafe.play" % "play-json_2.11" % playVersion,
-  "com.typesafe.play" %% "play-ws" % playVersion,
-  "org.scalaz" %% "scalaz-core" % scalazVersion,
-  "org.scalaz" %% "scalaz-concurrent" % scalazVersion
+  "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0"
 )
 
 
