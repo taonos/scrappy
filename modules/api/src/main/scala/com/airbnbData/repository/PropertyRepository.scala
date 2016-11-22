@@ -2,24 +2,35 @@ package com.airbnbData.repository
 
 import scala.concurrent.{ExecutionContext, Future}
 
-import com.airbnbData.model.Property
+import scalaz.Kleisli
+import com.vividsolutions.jts.geom.Point
+import slick.jdbc.JdbcBackend.Database
+
+import com.airbnbData.model._
+import com.airbnbData.model.{AirbnbUser, Property}
+
+
 
 /**
   * An implementation dependent DAO.  This could be implemented by Slick, Cassandra, or a REST API.
   */
 trait PropertyRepository extends Repository {
 
-  def lookup(id: Long)(implicit ec: PropertyRepositoryExecutionContext): Future[Option[Property]]
+  type Box[A] = Future[A]
+  type Dependencies = (Database, PropertyRepositoryExecutionContext)
+  type Operation[A] = Kleisli[Box, Dependencies, A]
 
-  def all(implicit ec: PropertyRepositoryExecutionContext): Future[Seq[Property]]
+//  def lookup(id: Long)(implicit ec: PropertyRepositoryExecutionContext): Future[Option[Property]]
 
-  def update(user: Property)(implicit ec: PropertyRepositoryExecutionContext): Future[Int]
+//  def all(implicit ec: PropertyRepositoryExecutionContext): Future[Seq[Property]]
 
-  def delete(id: Long)(implicit ec: PropertyRepositoryExecutionContext): Future[Int]
+//  def update(user: Property)(implicit ec: PropertyRepositoryExecutionContext): Future[Int]
 
-  def create(user: Property)(implicit ec: PropertyRepositoryExecutionContext): Future[Int]
+//  def delete(id: Long)(implicit ec: PropertyRepositoryExecutionContext): Future[Int]
 
-  def close(): Future[Unit]
+  def create(user: AirbnbUser, property: PropertyCreation): Operation[Int]
+
+  def close(): Kleisli[Future, Database, Unit]
 }
 
 /**

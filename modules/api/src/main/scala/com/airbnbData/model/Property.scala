@@ -13,8 +13,8 @@ import java.net.URL
   * through the custom postgres driver.
   */
 case class Property(
-                     id: Long,
-                     belongsTo: AirbnbUser,
+                     id: Long = 0L,
+//                     belongsTo: Array[AirbnbUser],
                      bathrooms: Int,
                      bedrooms: Int,
                      beds: Int,
@@ -28,7 +28,7 @@ case class Property(
                      propertyType: String,
                      publicAddress: String,
                      roomType: String,
-                     document: JsValue,
+                     document: String,
                      summary: String,
                      address: String,
                      description: String,

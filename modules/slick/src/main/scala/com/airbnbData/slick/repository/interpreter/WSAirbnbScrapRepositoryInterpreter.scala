@@ -1,9 +1,14 @@
 package com.airbnbData.slick.repository.interpreter
 
-import com.airbnbData.repository.AirbnbScrapRepository
 
 import scala.concurrent.Future
 import scalaz.Kleisli
+import io.circe._
+import io.circe.parser._
+import io.circe.optics.JsonPath._
+import com.airbnbData.repository.AirbnbScrapRepository
+import com.airbnbData.model.Property
+import play.api.libs.ws.WSClient
 
 /**
   * Created by Lance on 2016-11-07.
@@ -139,10 +144,12 @@ case class QueryRequest(
 
 class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
+  // TODO: Look into proper execution context
   private implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  override def scrap: Operation[String] = {
-    Kleisli[Box, Dependencies, String] { ws =>
+
+  override def scrap: Kleisli[Future, WSClient, String] = {
+    Kleisli { ws =>
 
       //    implicit val system = ActorSystem()
       //    implicit val materializer = ActorMaterializer()
@@ -177,8 +184,86 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
       //      .andThen { case _ => ws.close() }
       //      .andThen { case _ => system.terminate() }
 
-      response
 
+      val ss = response
+        // parse json
+        .map(parse)
+        // unbox json
+        .map(_.getOrElse(Json.Null))
+        // use optics to navigate json.
+        // https://travisbrown.github.io/circe/tut/optics.html
+        .map(root.search_results.each.listing.id.long.getAll)
+
+      val xxx = ss.flatMap { list =>
+        val s = list.map { id =>
+          ws
+            .url("https://api.airbnb.com/v2/listings/" + id)
+            .withQueryString(
+              r.clientId.parameterize,
+              r.locale.parameterize,
+              r.currency.parameterize,
+              ("_format", "v1_legacy_for_p3"),
+              ("_source", "mobile_p3"),
+              ("number_of_guests", "1")
+            )
+            .get()
+            .map { response =>
+              val body = response.body
+              val json = parse(body).getOrElse(Json.Null)
+              val base = root.listing
+
+              val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
+              val s = for {
+                id <- base.id.long.getOption(json)
+                bathrooms <- base.bathrooms.int.getOption(json)
+                bedrooms <- base.bedrooms.int.getOption(json)
+                beds <- base.beds.int.getOption(json)
+                city <- base.city.string.getOption(json)
+                bookable <- base.instantBookable.boolean.getOption(json)
+                btr <- base.isBusinessTravelReady.boolean.getOption(json)
+                newListing <- base.isNewListing.boolean.getOption(json)
+                geopoint <- for {
+                  lat <- base.lat.double.getOption(json)
+                  lng <- base.lng.double.getOption(json)
+                } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
+                name <- base.name.string.getOption(json)
+                personCapacity <- base.personCapacity.int.getOption(json)
+                propertyType <- base.propertyType.string.getOption(json)
+                publicAddress <- base.publicAddress.string.getOption(json)
+                roomType <- base.roomType.string.getOption(json)
+                summary <- base.summary.string.getOption(json)
+                address <- base.address.string.getOption(json)
+                description <- base.description.string.getOption(json)
+                airbnbUrl <- Some("https://www.google.com")
+              } yield (
+                id,
+                bathrooms,
+                bedrooms,
+                beds,
+                city,
+                bookable,
+                btr,
+                newListing,
+                geopoint,
+                name,
+                personCapacity,
+                propertyType,
+                publicAddress,
+                roomType,
+                body,
+                summary,
+                address,
+                description,
+                airbnbUrl
+                )
+              val se = Property.tupled
+            }
+
+        }
+        Future.sequence(s)
+      }
+
+      ss.map(_.foldLeft("") { case (acc, a) => acc + "\n" + a.toString })
     }
 
   }

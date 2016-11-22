@@ -13,13 +13,13 @@ trait AirbnbUsersDAO { self: Profile =>
   import slick.jdbc.{GetResult => GR}
 
   /** Entity class storing rows of table AirbnbUsers
-    *  @param id Database column id SqlType(int8), PrimaryKey
     *  @param firstName Database column first_name SqlType(varchar), Length(50,true)
     *  @param about Database column about SqlType(text)
     *  @param document Database column document SqlType(jsonb), Length(2147483647,false)
     *  @param createdAt Database column created_at SqlType(timestamptz)
-    *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
-  case class AirbnbUserRow(id: PK[AirbnbUsersTable], firstName: String, about: String, document: JsValue, createdAt: DateTime, updatedAt: Option[DateTime] = None)
+    *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None)
+    *  @param id Database column id SqlType(int8), PrimaryKey */
+  case class AirbnbUserRow(id: Long, firstName: String, about: String, document: JsValue, createdAt: DateTime, updatedAt: Option[DateTime] = None)
   //  /** GetResult implicit for fetching AirbnbUserRow objects using plain SQL queries */
   //  implicit def GetResultAirbnbUserRow(implicit e0: GR[Long], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[AirbnbUserRow] = GR{
   //    prs => import prs._
@@ -32,7 +32,7 @@ trait AirbnbUsersDAO { self: Profile =>
     def ? = (Rep.Some(id), Rep.Some(firstName), Rep.Some(about), Rep.Some(document), Rep.Some(createdAt), updatedAt).shaped.<>({r=>import r._; _1.map(_=> AirbnbUserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(int8), PrimaryKey */
-    val id: Rep[PK[AirbnbUsersTable]] = column[PK[AirbnbUsersTable]]("id", O.PrimaryKey)
+    val id: Rep[Long] = column[Long]("id", O.PrimaryKey)
     /** Database column first_name SqlType(varchar), Length(50,true) */
     val firstName: Rep[String] = column[String]("first_name", O.Length(50,varying=true))
     /** Database column about SqlType(text) */

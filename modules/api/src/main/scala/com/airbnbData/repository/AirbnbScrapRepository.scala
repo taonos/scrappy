@@ -17,5 +17,5 @@ trait AirbnbScrapRepository extends Repository {
   type Dependencies = WSClient
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
-  def scrap: Operation[String]
+  def scrap: Kleisli[Future, WSClient, String]
 }

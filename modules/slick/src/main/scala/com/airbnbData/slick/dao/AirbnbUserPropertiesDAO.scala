@@ -18,7 +18,7 @@ trait AirbnbUserPropertiesDAO extends AirbnbUsersDAO with PropertiesDAO { self: 
     *  @param propertyId Database column property_id SqlType(int8)
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
-  case class AirbnbUserPropertyRow(userId: PK[AirbnbUsersTable], propertyId: Long, createdAt: DateTime, updatedAt: Option[DateTime] = None)
+  case class AirbnbUserPropertyRow(userId: Long, propertyId: Long, createdAt: DateTime, updatedAt: Option[DateTime] = None)
   //  /** GetResult implicit for fetching UserPropertyRow objects using plain SQL queries */
   //  implicit def GetResultUserPropertyRow(implicit e0: GR[Long], e1: GR[DateTime], e2: GR[Option[DateTime]]): GR[UserPropertyRow] = GR{
   //    prs => import prs._
@@ -31,7 +31,7 @@ trait AirbnbUserPropertiesDAO extends AirbnbUsersDAO with PropertiesDAO { self: 
     def ? = (Rep.Some(userId), Rep.Some(propertyId), Rep.Some(createdAt), updatedAt).shaped.<>({r=>import r._; _1.map(_=> AirbnbUserPropertyRow.tupled((_1.get, _2.get, _3.get, _4)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column user_id SqlType(int8) */
-    val userId: Rep[PK[AirbnbUsersTable]] = column[PK[AirbnbUsersTable]]("user_id")
+    val userId: Rep[Long] = column[Long]("user_id")
     /** Database column property_id SqlType(int8) */
     val propertyId: Rep[Long] = column[Long]("property_id")
     /** Database column created_at SqlType(timestamptz) */
