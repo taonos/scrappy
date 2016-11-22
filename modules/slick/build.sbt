@@ -4,7 +4,7 @@ import slick.{ model => m }
 lazy val slickPgVersion = "0.14.3"
 lazy val slickVersion = "3.1.1"
 lazy val scalazVersion = "7.2.7"
-lazy val playVersion = "2.5.9"
+lazy val playVersion = "2.5.10"
 lazy val circeVersion = "0.5.1"
 
 scalaVersion := "2.11.8"

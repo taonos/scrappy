@@ -2,7 +2,7 @@
 scalaVersion := "2.11.8"
 
 lazy val scalazVersion = "7.2.7"
-lazy val playVersion = "2.5.9"
+lazy val playVersion = "2.5.10"
 lazy val slickVersion = "3.1.1"
 
 libraryDependencies ++=
