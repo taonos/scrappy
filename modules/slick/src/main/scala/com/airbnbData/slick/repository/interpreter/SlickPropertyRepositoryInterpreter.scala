@@ -1,17 +1,19 @@
 package com.airbnbData.slick.repository.interpreter
 
-import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 import scala.language.implicitConversions
-
 import org.joda.time.DateTime
 import slick.jdbc.JdbcBackend.Database
 
 import scalaz.Kleisli
+import com.airbnbData.util.FutureOps.Implicits._
 import com.airbnbData.model._
 import com.airbnbData.repository.{PropertyRepository, PropertyRepositoryExecutionContext}
 import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.{AirbnbUserPropertiesDAO, AirbnbUsersDAO, PropertiesDAO}
+
+
+import scalaz.concurrent.Task
 
 /**
   * Created by Lance on 2016-11-18.
@@ -36,15 +38,16 @@ class SlickPropertyRepositoryInterpreter
           AirbnbUserProperties += AirbnbUserPropertyRow(uid, pid, DateTime.now)
         }
 
-      db.run(
-        createRelation.transactionally
-      )
+      db
+        .run(
+          createRelation.transactionally
+        )
+        .asTask
     }
-
   // TODO: Refactor close function
-  def close(): Kleisli[Future, slick.jdbc.JdbcBackend.Database, Unit] =
+  def close(): Kleisli[Task, slick.jdbc.JdbcBackend.Database, Unit] =
     Kleisli { db =>
-      Future.successful(db.close())
+      Future.successful(db.close()).asTask
     }
 
   private implicit def airbnbUserToAirbnbUsersRow(user: AirbnbUser): AirbnbUserRow = {

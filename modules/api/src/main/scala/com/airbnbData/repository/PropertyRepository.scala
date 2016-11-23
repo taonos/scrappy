@@ -1,13 +1,13 @@
 package com.airbnbData.repository
 
 import scala.concurrent.{ExecutionContext, Future}
-
 import scalaz.Kleisli
 import com.vividsolutions.jts.geom.Point
 import slick.jdbc.JdbcBackend.Database
-
 import com.airbnbData.model._
 import com.airbnbData.model.{AirbnbUser, Property}
+
+import scalaz.concurrent.Task
 
 
 
@@ -16,7 +16,7 @@ import com.airbnbData.model.{AirbnbUser, Property}
   */
 trait PropertyRepository extends Repository {
 
-  type Box[A] = Future[A]
+  type Box[A] = Task[A]
   type Dependencies = (Database, PropertyRepositoryExecutionContext)
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
@@ -30,7 +30,7 @@ trait PropertyRepository extends Repository {
 
   def create(user: AirbnbUser, property: PropertyCreation): Operation[Int]
 
-  def close(): Kleisli[Future, Database, Unit]
+  def close(): Kleisli[Task, Database, Unit]
 }
 
 /**

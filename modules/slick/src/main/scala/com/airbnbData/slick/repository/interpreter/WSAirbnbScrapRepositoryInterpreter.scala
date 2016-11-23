@@ -10,6 +10,8 @@ import com.airbnbData.repository.AirbnbScrapRepository
 import com.airbnbData.model.Property
 import play.api.libs.ws.WSClient
 
+import scalaz.concurrent.Task
+
 /**
   * Created by Lance on 2016-11-07.
   */
@@ -147,14 +149,10 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
   // TODO: Look into proper execution context
   private implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+  import com.airbnbData.util.FutureOps.Implicits._
 
-  override def scrap: Kleisli[Future, WSClient, String] = {
+  override def scrap: Operation[String] = {
     Kleisli { ws =>
-
-      //    implicit val system = ActorSystem()
-      //    implicit val materializer = ActorMaterializer()
-      //    val ws = AhcWSClient()
-
 
       val r = QueryRequest()
 
@@ -178,14 +176,16 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
         r.sort.parameterize
       )
 
-      val response = request
+      val responseBody = request
         .get()
+        .asTask
+
         .map(_.body)
       //      .andThen { case _ => ws.close() }
       //      .andThen { case _ => system.terminate() }
 
 
-      val ss = response
+      val listOfId = responseBody
         // parse json
         .map(parse)
         // unbox json
@@ -194,7 +194,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
         // https://travisbrown.github.io/circe/tut/optics.html
         .map(root.search_results.each.listing.id.long.getAll)
 
-      val xxx = ss.flatMap { list =>
+      val xxx = listOfId.flatMap { list =>
         val s = list.map { id =>
           ws
             .url("https://api.airbnb.com/v2/listings/" + id)
@@ -207,6 +207,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
               ("number_of_guests", "1")
             )
             .get()
+            .asTask
             .map { response =>
               val body = response.body
               val json = parse(body).getOrElse(Json.Null)
@@ -260,10 +261,11 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
             }
 
         }
-        Future.sequence(s)
+
+        Task.gatherUnordered(s)
       }
 
-      ss.map(_.foldLeft("") { case (acc, a) => acc + "\n" + a.toString })
+      listOfId.map(_.foldLeft("") { case (acc, a) => acc + "\n" + a.toString })
     }
 
   }

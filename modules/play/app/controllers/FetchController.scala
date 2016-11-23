@@ -5,6 +5,7 @@ import javax.inject.{Inject, Singleton}
 import com.airbnbData.repository.{AirbnbScrapRepository, PropertyRepository, PropertyRepositoryExecutionContext}
 import com.airbnbData.service.AirbnbScrapService
 import slick.jdbc.JdbcBackend._
+import com.airbnbData.util.TaskOps.Implicits._
 import scala.concurrent.Future
 
 import scala.concurrent.ExecutionContext
@@ -29,5 +30,6 @@ class FetchController @Inject() (ws: WSClient, airbnbScrapService: AirbnbScrapSe
         println(result)
         Ok(views.html.airbnb(result))
       }
+      .runFuture
   }
 }
