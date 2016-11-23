@@ -1,9 +1,10 @@
 package com.airbnbData.repository
 
 import scala.concurrent.Future
-import scalaz.Kleisli
+import scalaz.{Kleisli, OptionT}
 import play.api.libs.ws._
 import com.airbnbData.model
+import com.airbnbData.model.{AirbnbUserCreation, PropertyCreation}
 
 import scalaz.concurrent.Task
 
@@ -17,5 +18,5 @@ trait AirbnbScrapRepository extends Repository {
   type Dependencies = WSClient
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
-  def scrap: Operation[String]
+  def scrap: Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]]
 }

@@ -1,16 +1,15 @@
 package com.airbnbData.slick.dao
 
-import java.net.URL
-
 import com.airbnbData.slick.dao.helper.Profile
 
 /**
   * Created by Lance on 2016-10-12.
   */
 trait PropertiesDAO { self: Profile =>
+  import java.net.URL
   import com.vividsolutions.jts.geom.Point
   import org.joda.time.DateTime
-  import play.api.libs.json.JsValue
+  import io.circe.Json
   import profile.api._
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
@@ -37,7 +36,7 @@ trait PropertiesDAO { self: Profile =>
     *  @param airbnbUrl Database column airbnb_url SqlType(varchar), Length(2038,true)
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
-  case class PropertyRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, instantBookable: Boolean = false, isBusinessTravelReady: Boolean = false, isNewListing: Boolean = false, geopoint: Point, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: JsValue, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: DateTime, updatedAt: Option[DateTime] = None)
+  case class PropertyRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, instantBookable: Boolean = false, isBusinessTravelReady: Boolean = false, isNewListing: Boolean = false, geopoint: Point, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: Json, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: DateTime, updatedAt: Option[DateTime] = None)
   //  /** GetResult implicit for fetching PropertyRow objects using plain SQL queries */
   //  implicit def GetResultPropertyRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Boolean], e4: GR[DateTime], e5: GR[Option[DateTime]]): GR[PropertyRow] = GR{
   //    prs => import prs._
@@ -78,7 +77,7 @@ trait PropertiesDAO { self: Profile =>
     /** Database column room_type SqlType(varchar), Length(70,true) */
     val roomType: Rep[String] = column[String]("room_type", O.Length(70,varying=true))
     /** Database column document SqlType(jsonb), Length(2147483647,false) */
-    val document: Rep[JsValue] = column[JsValue]("document")
+    val document: Rep[Json] = column[Json]("document")
     /** Database column summary SqlType(text) */
     val summary: Rep[String] = column[String]("summary")
     /** Database column address SqlType(varchar), Length(200,true) */

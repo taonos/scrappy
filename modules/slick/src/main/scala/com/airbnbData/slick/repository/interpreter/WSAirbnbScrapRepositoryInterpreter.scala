@@ -1,13 +1,14 @@
 package com.airbnbData.slick.repository.interpreter
 
-
-import scala.concurrent.Future
 import scalaz.Kleisli
 import io.circe._
 import io.circe.parser._
 import io.circe.optics.JsonPath._
 import com.airbnbData.repository.AirbnbScrapRepository
-import com.airbnbData.model.Property
+import com.airbnbData.model.{AirbnbUserCreation, Property, PropertyCreation}
+import com.airbnbData.slick.dao.PropertiesDAO
+import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
+import org.joda.time.DateTime
 import play.api.libs.ws.WSClient
 
 import scalaz.concurrent.Task
@@ -146,12 +147,9 @@ case class QueryRequest(
 
 class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
-  // TODO: Look into proper execution context
-  private implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-
   import com.airbnbData.util.FutureOps.Implicits._
 
-  override def scrap: Operation[String] = {
+  override def scrap: Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]] = {
     Kleisli { ws =>
 
       val r = QueryRequest()
@@ -194,78 +192,95 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
         // https://travisbrown.github.io/circe/tut/optics.html
         .map(root.search_results.each.listing.id.long.getAll)
 
-      val xxx = listOfId.flatMap { list =>
-        val s = list.map { id =>
-          ws
-            .url("https://api.airbnb.com/v2/listings/" + id)
-            .withQueryString(
-              r.clientId.parameterize,
-              r.locale.parameterize,
-              r.currency.parameterize,
-              ("_format", "v1_legacy_for_p3"),
-              ("_source", "mobile_p3"),
-              ("number_of_guests", "1")
-            )
-            .get()
-            .asTask
-            .map { response =>
-              val body = response.body
-              val json = parse(body).getOrElse(Json.Null)
-              val base = root.listing
-
-              val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
-              val s = for {
-                id <- base.id.long.getOption(json)
-                bathrooms <- base.bathrooms.int.getOption(json)
-                bedrooms <- base.bedrooms.int.getOption(json)
-                beds <- base.beds.int.getOption(json)
-                city <- base.city.string.getOption(json)
-                bookable <- base.instantBookable.boolean.getOption(json)
-                btr <- base.isBusinessTravelReady.boolean.getOption(json)
-                newListing <- base.isNewListing.boolean.getOption(json)
-                geopoint <- for {
-                  lat <- base.lat.double.getOption(json)
-                  lng <- base.lng.double.getOption(json)
-                } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
-                name <- base.name.string.getOption(json)
-                personCapacity <- base.personCapacity.int.getOption(json)
-                propertyType <- base.propertyType.string.getOption(json)
-                publicAddress <- base.publicAddress.string.getOption(json)
-                roomType <- base.roomType.string.getOption(json)
-                summary <- base.summary.string.getOption(json)
-                address <- base.address.string.getOption(json)
-                description <- base.description.string.getOption(json)
-                airbnbUrl <- Some("https://www.google.com")
-              } yield (
-                id,
-                bathrooms,
-                bedrooms,
-                beds,
-                city,
-                bookable,
-                btr,
-                newListing,
-                geopoint,
-                name,
-                personCapacity,
-                propertyType,
-                publicAddress,
-                roomType,
-                body,
-                summary,
-                address,
-                description,
-                airbnbUrl
+      val fetchedAllPropertyCreations = listOfId
+        .flatMap { list =>
+          val listOfProperties = list
+            .map { id =>
+              ws
+                .url("https://api.airbnb.com/v2/listings/" + id)
+                .withQueryString(
+                  r.clientId.parameterize,
+                  r.locale.parameterize,
+                  r.currency.parameterize,
+                  ("_format", "v1_legacy_for_p3"),
+                  ("_source", "mobile_p3"),
+                  ("number_of_guests", "1")
                 )
-              val se = Property.tupled
+                .get()
+                .asTask
+                .map { response =>
+                  val body = response.body
+                  val json: io.circe.Json = parse(body).getOrElse(Json.Null)
+                  val base = root.listing
+
+                  // create AirbnbUserCreation
+                  val userBase = root.listing.user.user
+                  val airbnbUserCreation = for {
+                    id <- userBase.id.long.getOption(json)
+                    firstName <- userBase.first_name.string.getOption(json)
+                    about <- userBase.about.string.getOption(json)
+                    document <- root.listing.json.getOption(json)
+                  } yield AirbnbUserCreation(
+                    id,
+                    firstName,
+                    about,
+                    document
+                  )
+
+                  // create PropertyCreation
+                  val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
+                  val propertyCreation = for {
+                    id <- base.id.long.getOption(json)
+                    bathrooms <- base.bathrooms.int.getOption(json)
+                    bedrooms <- base.bedrooms.int.getOption(json)
+                    beds <- base.beds.int.getOption(json)
+                    city <- base.city.string.getOption(json)
+                    bookable <- base.instantBookable.boolean.getOption(json)
+                    btr <- base.isBusinessTravelReady.boolean.getOption(json)
+                    newListing <- base.isNewListing.boolean.getOption(json)
+                    geopoint <- for {
+                      lat <- base.lat.double.getOption(json)
+                      lng <- base.lng.double.getOption(json)
+                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
+                    name <- base.name.string.getOption(json)
+                    personCapacity <- base.personCapacity.int.getOption(json)
+                    propertyType <- base.propertyType.string.getOption(json)
+                    publicAddress <- base.publicAddress.string.getOption(json)
+                    roomType <- base.roomType.string.getOption(json)
+                    document <- base.json.getOption(json)
+                    summary <- base.summary.string.getOption(json)
+                    address <- base.address.string.getOption(json)
+                    description <- base.description.string.getOption(json)
+                    airbnbUrl <- Some(new java.net.URL("https://www.google.com"))
+                  } yield PropertyCreation(
+                    id,
+                    bathrooms,
+                    bedrooms,
+                    beds,
+                    city,
+                    bookable,
+                    btr,
+                    newListing,
+                    geopoint,
+                    name,
+                    personCapacity,
+                    propertyType,
+                    publicAddress,
+                    roomType,
+                    document,
+                    summary,
+                    address,
+                    description,
+                    airbnbUrl
+                    )
+
+                  airbnbUserCreation.flatMap { a => propertyCreation.map((a, _)) }
+                }
             }
 
+          Task.gatherUnordered(listOfProperties)
         }
-
-        Task.gatherUnordered(s)
-      }
-
-      listOfId.map(_.foldLeft("") { case (acc, a) => acc + "\n" + a.toString })
+      fetchedAllPropertyCreations
     }
 
   }

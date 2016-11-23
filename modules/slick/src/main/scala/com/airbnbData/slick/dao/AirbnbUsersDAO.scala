@@ -7,7 +7,7 @@ import com.airbnbData.slick.dao.helper.{PK, Profile}
   */
 trait AirbnbUsersDAO { self: Profile =>
   import org.joda.time.DateTime
-  import play.api.libs.json.JsValue
+  import io.circe.Json
   import profile.api._
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
@@ -19,7 +19,7 @@ trait AirbnbUsersDAO { self: Profile =>
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None)
     *  @param id Database column id SqlType(int8), PrimaryKey */
-  case class AirbnbUserRow(id: Long, firstName: String, about: String, document: JsValue, createdAt: DateTime, updatedAt: Option[DateTime] = None)
+  case class AirbnbUserRow(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: Option[DateTime] = None)
   //  /** GetResult implicit for fetching AirbnbUserRow objects using plain SQL queries */
   //  implicit def GetResultAirbnbUserRow(implicit e0: GR[Long], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[AirbnbUserRow] = GR{
   //    prs => import prs._
@@ -38,7 +38,7 @@ trait AirbnbUsersDAO { self: Profile =>
     /** Database column about SqlType(text) */
     val about: Rep[String] = column[String]("about")
     /** Database column document SqlType(jsonb), Length(2147483647,false) */
-    val document: Rep[JsValue] = column[JsValue]("document")
+    val document: Rep[Json] = column[Json]("document")
     /** Database column created_at SqlType(timestamptz) */
     val createdAt: Rep[DateTime] = column[DateTime]("created_at")
     /** Database column updated_at SqlType(timestamptz), Default(None) */

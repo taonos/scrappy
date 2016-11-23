@@ -6,7 +6,6 @@ import com.airbnbData.repository.{AirbnbScrapRepository, PropertyRepository, Pro
 import com.airbnbData.service.AirbnbScrapService
 import slick.jdbc.JdbcBackend._
 import com.airbnbData.util.TaskOps.Implicits._
-import scala.concurrent.Future
 
 import scala.concurrent.ExecutionContext
 import play.api.libs.ws._
@@ -16,13 +15,10 @@ import play.api.mvc.{Action, Controller}
 @Singleton
 class FetchController @Inject() (ws: WSClient, airbnbScrapService: AirbnbScrapService, airbnbScrapRepository: AirbnbScrapRepository, propertyRepo: PropertyRepository, db: Database, propertyEC: PropertyRepositoryExecutionContext) extends Controller {
 
-  private implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-
-
   def download = Action.async {
     airbnbScrapService
       .scrap(
-        propertyRepo.create,
+        propertyRepo.bulkCreate,
         airbnbScrapRepository.scrap _
       )
       .run((ws, db, propertyEC))

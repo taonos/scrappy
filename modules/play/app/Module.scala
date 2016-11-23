@@ -30,6 +30,7 @@ class Module(environment: Environment,
     bind(classOf[AirbnbScrapService]).to(classOf[AirbnbScrapServiceInterpreter])
 
     bind(classOf[UserRepositoryCloseHook]).asEagerSingleton()
+    bind(classOf[PropertyRepositoryCloseHook]).asEagerSingleton()
   }
 }
 
@@ -75,6 +76,18 @@ class SlickPropertyRepositoryExecutionContext(ec: ExecutionContext) extends Prop
 
 /** Closes database connections safely.  Important on dev restart. */
 class UserRepositoryCloseHook @Inject()(repo: UserRepository, lifecycle: ApplicationLifecycle) {
+  private val logger = org.slf4j.LoggerFactory.getLogger("application")
+
+  lifecycle.addStopHook { () =>
+    Future.successful {
+      logger.info("Now closing database connections!")
+      repo.close()
+    }
+  }
+}
+
+/** Closes database connections safely.  Important on dev restart. */
+class PropertyRepositoryCloseHook @Inject()(repo: PropertyRepository, lifecycle: ApplicationLifecycle) {
   private val logger = org.slf4j.LoggerFactory.getLogger("application")
 
   lifecycle.addStopHook { () =>

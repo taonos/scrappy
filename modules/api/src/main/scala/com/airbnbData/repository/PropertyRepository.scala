@@ -10,7 +10,6 @@ import com.airbnbData.model.{AirbnbUser, Property}
 import scalaz.concurrent.Task
 
 
-
 /**
   * An implementation dependent DAO.  This could be implemented by Slick, Cassandra, or a REST API.
   */
@@ -28,7 +27,9 @@ trait PropertyRepository extends Repository {
 
 //  def delete(id: Long)(implicit ec: PropertyRepositoryExecutionContext): Future[Int]
 
-  def create(user: AirbnbUser, property: PropertyCreation): Operation[Int]
+  def create(user: AirbnbUserCreation, property: PropertyCreation): Operation[Int]
+
+  def bulkCreate(list: Seq[(AirbnbUserCreation, PropertyCreation)]): Operation[Option[Int]]
 
   def close(): Kleisli[Task, Database, Unit]
 }

@@ -1,11 +1,7 @@
 package controllers
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
-
-import akka.actor.ActorSystem
 import play.api.mvc._
-
 import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
 import com.airbnbData.service.UserService
 import com.airbnbData.model.{User}

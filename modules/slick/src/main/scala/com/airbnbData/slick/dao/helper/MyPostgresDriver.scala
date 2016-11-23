@@ -4,16 +4,19 @@ import java.net.URL
 
 import com.github.tminglei.slickpg._
 import play.api.libs.json.{JsValue, Json}
+import slick.ast.BaseTypedType
+import slick.jdbc.JdbcType
 
 /**
  * A postgresql driver with extended Joda and JSON support.
  */
-trait MyPostgresDriver extends ExPostgresDriver
+trait MyPostgresDriver extends ExPostgresProfile
   with PgArraySupport
   with PgDateSupportJoda
   with PgRangeSupport
   with PgHStoreSupport
   with PgPlayJsonSupport
+  with PgCirceJsonSupport
   with PgSearchSupport
   with PgPostGISSupport
   with PgNetSupport
@@ -31,16 +34,16 @@ trait MyPostgresDriver extends ExPostgresDriver
     with SearchImplicits
     with SearchAssistants {
 
-    implicit val strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
+    implicit val strListTypeMapper: DriverJdbcType[List[String]] = new SimpleArrayJdbcType[String]("text").to(_.toList)
 
-    implicit val playJsonArrayTypeMapper =
+    implicit val playJsonArrayTypeMapper: DriverJdbcType[List[JsValue]] =
       new AdvancedArrayJdbcType[JsValue](pgjson,
         (s) => utils.SimpleArrayUtils.fromString[JsValue](Json.parse)(s).orNull,
         (v) => utils.SimpleArrayUtils.mkString[JsValue](_.toString())(v)
       ).to(_.toList)
 
     // Mapping between String and URL
-    implicit val strURLTypeMapper = MappedColumnType.base[URL, String](
+    implicit val strURLTypeMapper: JdbcType[URL] with BaseTypedType[URL] = MappedColumnType.base[URL, String](
       url => url.toString,
       str => new URL(str)
     )
