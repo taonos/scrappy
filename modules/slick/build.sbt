@@ -29,7 +29,6 @@ libraryDependencies ++=
     "com.github.tminglei" %% "slick-pg_circe-json"
   ).map(_ % slickPgVersion) ++
   Seq(
-    "com.typesafe.play" % "play-json_2.11",
     "com.typesafe.play" %% "play-ws"
   ).map(_ % playVersion) ++
   Seq(

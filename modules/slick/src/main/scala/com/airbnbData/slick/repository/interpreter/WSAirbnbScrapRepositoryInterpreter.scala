@@ -28,12 +28,11 @@ trait RequestParam[T] {
   override def toString: String = s"($key, $value)"
 }
 
+
 case class ClientId(id: String = "3092nxybyb0otqw18e8nh5nty") extends RequestParam[String] {
   override val key: String = "client_id"
   override val value: String = id
 }
-
-
 
 case class Locale(v: String = "zh-CN") extends RequestParam[String] {
   override val key: String = "locale"
@@ -227,41 +226,37 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
                     document
                   )
 
-                  // create PropertyCreation
                   val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
+                  // create PropertyCreation
                   val propertyCreation = for {
-                    id <- base.id.long.getOption(json)
-                    bathrooms <- base.bathrooms.int.getOption(json)
-                    bedrooms <- base.bedrooms.int.getOption(json)
-                    beds <- base.beds.int.getOption(json)
-                    city <- base.city.string.getOption(json)
-                    bookable <- base.instantBookable.boolean.getOption(json)
-                    btr <- base.isBusinessTravelReady.boolean.getOption(json)
-                    newListing <- base.isNewListing.boolean.getOption(json)
-                    geopoint <- for {
-                      lat <- base.lat.double.getOption(json)
-                      lng <- base.lng.double.getOption(json)
-                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
-                    name <- base.name.string.getOption(json)
-                    personCapacity <- base.personCapacity.int.getOption(json)
-                    propertyType <- base.propertyType.string.getOption(json)
-                    publicAddress <- base.publicAddress.string.getOption(json)
-                    roomType <- base.roomType.string.getOption(json)
+                    propertyType <- base.property_type.string.getOption(json)
+                    publicAddress <- base.public_address.string.getOption(json)
+                    roomType <- base.room_type.string.getOption(json)
                     document <- base.json.getOption(json)
                     summary <- base.summary.string.getOption(json)
                     address <- base.address.string.getOption(json)
                     description <- base.description.string.getOption(json)
                     airbnbUrl <- Some(new java.net.URL("https://www.google.com"))
+                    id <- base.id.long.getOption(json)
+                    bathrooms <- base.bathrooms.int.getOption(json) match {
+                      case None => base.bathrooms.double.getOption(json).map(_.toInt)
+                      case Some(v) => Some(v)
+                    }
+                    bedrooms <- base.bedrooms.int.getOption(json)
+                    beds <- base.beds.int.getOption(json)
+                    city <- base.city.string.getOption(json)
+//                    geopoint <- for {
+//                      lat <- base.lat.double.getOption(json)
+//                      lng <- base.lng.double.getOption(json)
+//                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
+                    name <- base.name.string.getOption(json)
+                    personCapacity <- base.person_capacity.int.getOption(json)
                   } yield PropertyCreation(
                     id,
                     bathrooms,
                     bedrooms,
                     beds,
                     city,
-                    bookable,
-                    btr,
-                    newListing,
-                    geopoint,
                     name,
                     personCapacity,
                     propertyType,

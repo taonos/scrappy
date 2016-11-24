@@ -25,13 +25,13 @@ trait AirbnbUserPropertiesDAO extends AirbnbUsersDAO with PropertiesDAO { self: 
   //      UserPropertyRow.tupled((<<[Long], <<[Long], <<[DateTime], <<?[DateTime]))
   //  }
   /** Table description of table airbnb_user_properties. Objects of this class serve as prototypes for rows in queries. */
-  protected class AirbnbUserPropertiesTable(_tableTag: Tag) extends Table[AirbnbUserPropertyRow](_tableTag, "user_property") {
-    def * = (userId, propertyId, createdAt, updatedAt) <> (AirbnbUserPropertyRow.tupled, AirbnbUserPropertyRow.unapply)
+  protected class AirbnbUserPropertiesTable(_tableTag: Tag) extends Table[AirbnbUserPropertyRow](_tableTag, "airbnb_user_properties") {
+    def * = (airbnbUserId, propertyId, createdAt, updatedAt) <> (AirbnbUserPropertyRow.tupled, AirbnbUserPropertyRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(userId), Rep.Some(propertyId), Rep.Some(createdAt), updatedAt).shaped.<>({r=>import r._; _1.map(_=> AirbnbUserPropertyRow.tupled((_1.get, _2.get, _3.get, _4)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(airbnbUserId), Rep.Some(propertyId), Rep.Some(createdAt), updatedAt).shaped.<>({ r=>import r._; _1.map(_=> AirbnbUserPropertyRow.tupled((_1.get, _2.get, _3.get, _4)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column user_id SqlType(int8) */
-    val userId: Rep[Long] = column[Long]("user_id")
+    val airbnbUserId: Rep[Long] = column[Long]("airbnb_user_id")
     /** Database column property_id SqlType(int8) */
     val propertyId: Rep[Long] = column[Long]("property_id")
     /** Database column created_at SqlType(timestamptz) */
@@ -40,10 +40,10 @@ trait AirbnbUserPropertiesDAO extends AirbnbUsersDAO with PropertiesDAO { self: 
     val updatedAt: Rep[Option[DateTime]] = column[Option[DateTime]]("updated_at", O.Default(None))
 
     /** Primary key of UserProperty (database name user_property_pkey) */
-    val pk = primaryKey("user_property_pkey", (propertyId, userId))
+    val pk = primaryKey("user_property_pkey", (propertyId, airbnbUserId))
 
     /** Foreign key referencing AirbnbUser (database name user_id_FK) */
-    lazy val airbnbUserFk = foreignKey("user_id_FK", userId, AirbnbUsers)(r => r.id, onUpdate=model.ForeignKeyAction.NoAction, onDelete=model.ForeignKeyAction.Restrict)
+    lazy val airbnbUserFk = foreignKey("user_id_FK", airbnbUserId, AirbnbUsers)(r => r.id, onUpdate=model.ForeignKeyAction.NoAction, onDelete=model.ForeignKeyAction.Restrict)
     /** Foreign key referencing Property (database name property_id_FK) */
     lazy val propertyFk = foreignKey("property_id_FK", propertyId, Properties)(r => r.id, onUpdate=model.ForeignKeyAction.NoAction, onDelete=model.ForeignKeyAction.Restrict)
   }

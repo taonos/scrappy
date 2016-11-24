@@ -26,7 +26,7 @@ trait AirbnbUsersDAO { self: Profile =>
   //      AirbnbUserRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<[DateTime], <<?[DateTime]))
   //  }
   /** Table description of table airbnb_user. Objects of this class serve as prototypes for rows in queries. */
-  protected class AirbnbUsersTable(_tableTag: Tag) extends Table[AirbnbUserRow](_tableTag, "airbnb_user") {
+  protected class AirbnbUsersTable(_tableTag: Tag) extends Table[AirbnbUserRow](_tableTag, "airbnb_users") {
     def * = (id, firstName, about, document, createdAt, updatedAt) <> (AirbnbUserRow.tupled, AirbnbUserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(firstName), Rep.Some(about), Rep.Some(document), Rep.Some(createdAt), updatedAt).shaped.<>({r=>import r._; _1.map(_=> AirbnbUserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))

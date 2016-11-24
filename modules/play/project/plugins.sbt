@@ -1,3 +1,6 @@
+
+resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
+
 // web plugins
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
