@@ -31,6 +31,8 @@ trait PropertyRepository extends Repository {
 
   def bulkCreate(list: Seq[(AirbnbUserCreation, PropertyCreation)]): Operation[Option[Int]]
 
+  def deleteAll(): Operation[Int]
+
   def close(): Kleisli[Task, Database, Unit]
 }
 

@@ -21,6 +21,7 @@ trait AirbnbScrapService {
 
   def scrap(
              save: Seq[(AirbnbUserCreation, PropertyCreation)] => Kleisli[Task, (Database, PropertyRepositoryExecutionContext), Option[Int]],
-             scrap: () => Kleisli[Task, WSClient, List[Option[(AirbnbUserCreation, PropertyCreation)]]]
+             scrap: () => Kleisli[Task, WSClient, List[Option[(AirbnbUserCreation, PropertyCreation)]]],
+             deleteAll: () => Kleisli[Task, (Database, PropertyRepositoryExecutionContext), Int]
            ): Kleisli[Task, (WSClient, Database, PropertyRepositoryExecutionContext), String]
 }

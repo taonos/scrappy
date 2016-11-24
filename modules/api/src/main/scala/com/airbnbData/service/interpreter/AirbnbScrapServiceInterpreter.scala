@@ -19,9 +19,12 @@ import scalaz.std.option._
 class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
   override def scrap(
                       save: Seq[(AirbnbUserCreation, PropertyCreation)] => Kleisli[Task, (Database, PropertyRepositoryExecutionContext), Option[Int]],
-                      scrap: () => Kleisli[Task, WSClient, List[Option[(AirbnbUserCreation, PropertyCreation)]]]
+                      scrap: () => Kleisli[Task, WSClient, List[Option[(AirbnbUserCreation, PropertyCreation)]]],
+                      deleteAll: () => Kleisli[Task, (Database, PropertyRepositoryExecutionContext), Int]
                     ): Kleisli[Task, (WSClient, Database, PropertyRepositoryExecutionContext), String] = {
     for {
+      // TODO: for debug purpose only
+      _ <- deleteAll().local[(WSClient, Database, PropertyRepositoryExecutionContext)] { case (_, d, p) => (d, p) }
       listOfUsersAndProperties <- scrap().local[(WSClient, Database, PropertyRepositoryExecutionContext)](_._1).map { list => list.flatMap(_.toList) }
       savedResult <- save(listOfUsersAndProperties).local[(WSClient, Database, PropertyRepositoryExecutionContext)] { case (_, d, p) => (d, p) }
     } yield savedResult map (_.toString) getOrElse "Something is terribly wrong here!"

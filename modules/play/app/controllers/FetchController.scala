@@ -19,7 +19,8 @@ class FetchController @Inject() (ws: WSClient, airbnbScrapService: AirbnbScrapSe
     airbnbScrapService
       .scrap(
         propertyRepo.bulkCreate,
-        airbnbScrapRepository.scrap _
+        airbnbScrapRepository.scrap _,
+        propertyRepo.deleteAll
       )
       .run((ws, db, propertyEC))
       .map { result =>

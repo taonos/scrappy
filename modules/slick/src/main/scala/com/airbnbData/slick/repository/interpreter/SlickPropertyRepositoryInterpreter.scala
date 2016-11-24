@@ -1,9 +1,12 @@
 package com.airbnbData.slick.repository.interpreter
 
+import com.airbnbData.model
+
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import org.joda.time.DateTime
 import slick.jdbc.JdbcBackend.Database
+
 import scalaz.concurrent.Task
 import scalaz.Kleisli
 import com.airbnbData.util.FutureOps.Implicits._
@@ -68,6 +71,16 @@ class SlickPropertyRepositoryInterpreter
           createRelations
         )
         .asTask
+    }
+  }
+
+  override def deleteAll() = {
+    Kleisli { case (db, ec) =>
+      implicit val context = ec
+
+      val deletion = AirbnbUserProperties.delete andThen Properties.delete andThen AirbnbUsers.delete
+
+      db.run(deletion).asTask
     }
   }
 
