@@ -1,7 +1,6 @@
 package com.airbnbData.service
 
-import play.api.libs.ws._
-
+import org.http4s.client.Client
 import scalaz.Kleisli
 import slick.jdbc.JdbcBackend.Database
 import com.airbnbData.model._
@@ -15,13 +14,13 @@ import scalaz.concurrent.Task
   */
 trait AirbnbScrapService {
   type Box[A] = Task[A]
-//  type Dependencies = (WSClient, Database, AirbnbScrapRepository, PropertyRepository)
-  type Dependencies = (WSClient, AirbnbScrapRepository)
+  type Dependencies = (Client, AirbnbScrapRepository)
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
-  def scrap(
+  def scrap(guests: Int)
+           (
              save: Seq[(AirbnbUserCreation, PropertyCreation)] => Kleisli[Task, (Database, PropertyRepositoryExecutionContext), Option[Int]],
-             scrap: () => Kleisli[Task, WSClient, List[Option[(AirbnbUserCreation, PropertyCreation)]]],
+             scrap: Int => Kleisli[Task, Client, List[Option[(AirbnbUserCreation, PropertyCreation)]]],
              deleteAll: () => Kleisli[Task, (Database, PropertyRepositoryExecutionContext), Int]
-           ): Kleisli[Task, (WSClient, Database, PropertyRepositoryExecutionContext), String]
+           ): Kleisli[Task, (Client, Database, PropertyRepositoryExecutionContext), String]
 }

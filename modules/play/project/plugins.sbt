@@ -1,5 +1,5 @@
 
-resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
+//resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 // web plugins
 

@@ -1,9 +1,9 @@
 package com.airbnbData.model
 
+import io.circe.Json
 import org.joda.time.DateTime
-import play.api.libs.json.JsValue
 
-import scalaz.{\/, ValidationNel, NonEmptyList}
+import scalaz.{NonEmptyList, ValidationNel, \/}
 import scalaz.Scalaz._
 
 /**
@@ -12,7 +12,7 @@ import scalaz.Scalaz._
   * Note that this uses Joda Time classes and UUID, which are specifically mapped
   * through the custom postgres driver.
   */
-case class AirbnbUser(id: Long, firstName: String, about: String, document: JsValue, createdAt: DateTime, updatedAt: Option[DateTime])
+case class AirbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: Option[DateTime])
 
 object AirbnbUser {
 
@@ -30,7 +30,7 @@ object AirbnbUser {
       about.successNel[String]
   }
 
-  def airbnbUser(id: Long, firstName: String, about: String, document: JsValue, createdAt: DateTime, updatedAt: Option[DateTime]): NonEmptyList[String] \/ AirbnbUser = {
+  def airbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: Option[DateTime]): NonEmptyList[String] \/ AirbnbUser = {
     val result = validateFirstName(firstName) |@|
       validateAbout(about)
 

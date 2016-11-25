@@ -6,6 +6,7 @@ lazy val slickVersion = "3.2.0-M1"
 lazy val scalazVersion = "7.2.7"
 lazy val playVersion = "2.5.10"
 lazy val circeVersion = "0.5.1"
+lazy val http4sVersion = "0.14.11a"
 
 scalaVersion := "2.11.8"
 
@@ -36,10 +37,15 @@ libraryDependencies ++=
     "org.scalaz" %% "scalaz-concurrent"
   ).map(_ % scalazVersion) ++
   Seq(
-  "com.zaxxer" % "HikariCP" % "2.5.1",
-  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
-  "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0"
-)
+    "org.http4s" %% "http4s-dsl",
+    "org.http4s" %% "http4s-blaze-client"
+  ).map(_ % http4sVersion) ++
+  Seq(
+    "co.fs2" %% "fs2-core" % "0.9.2",
+    "com.zaxxer" % "HikariCP" % "2.5.1",
+    "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
+    "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0"
+  )
 
 
 lazy val databaseUrl = sys.env.getOrElse("DB_DEFAULT_URL", "jdbc:postgresql:test_db")

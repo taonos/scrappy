@@ -1,8 +1,6 @@
 package com.airbnbData.model
 
 import org.joda.time.DateTime
-import play.api.libs.json.JsValue
-import com.vividsolutions.jts.geom.Point
 import java.net.URL
 
 
@@ -22,7 +20,6 @@ case class Property(
                      instantBookable: Boolean,
                      isBusinessTravelReady: Boolean,
                      isNewListing: Boolean,
-                     geopoint: Point,
                      name: String,
                      personCapacity: Int,
                      propertyType: String,
