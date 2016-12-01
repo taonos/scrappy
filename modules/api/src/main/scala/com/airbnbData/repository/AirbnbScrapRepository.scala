@@ -1,7 +1,8 @@
 package com.airbnbData.repository
 
+import play.api.libs.ws.WSClient
+//import org.http4s.client.Client
 import scalaz.{Kleisli, OptionT}
-import org.http4s.client.Client
 import com.airbnbData.model.{AirbnbUserCreation, PropertyCreation}
 
 import scalaz.concurrent.Task
@@ -13,7 +14,7 @@ import scalaz.concurrent.Task
 trait AirbnbScrapRepository extends Repository {
 
   type Box[A] = Task[A]
-  type Dependencies = Client
+  type Dependencies = WSClient
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
   def scrap(guests: Int): Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]]

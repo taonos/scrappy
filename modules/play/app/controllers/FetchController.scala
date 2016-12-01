@@ -6,16 +6,17 @@ import com.airbnbData.repository.{AirbnbScrapRepository, PropertyRepository, Pro
 import com.airbnbData.service.AirbnbScrapService
 import slick.jdbc.JdbcBackend._
 import com.airbnbData.util.TaskOps.Implicits._
+import play.api.libs.ws.WSClient
 
 import scala.concurrent.ExecutionContext
 import play.api.mvc.{Action, Controller}
 
 // TODO: How does injection work? Where to define how to inject?
 @Singleton
-class FetchController @Inject() (airbnbScrapService: AirbnbScrapService, airbnbScrapRepository: AirbnbScrapRepository, propertyRepo: PropertyRepository, db: Database, propertyEC: PropertyRepositoryExecutionContext) extends Controller {
+class FetchController @Inject() (airbnbScrapService: AirbnbScrapService, airbnbScrapRepository: AirbnbScrapRepository, propertyRepo: PropertyRepository, client: WSClient, db: Database, propertyEC: PropertyRepositoryExecutionContext) extends Controller {
 
   def download = Action.async {
-    val client = org.http4s.client.blaze.PooledHttp1Client()
+//    val client = org.http4s.client.blaze.PooledHttp1Client()
 
     airbnbScrapService
       .scrap(1)(

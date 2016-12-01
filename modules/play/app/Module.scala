@@ -23,8 +23,8 @@ class Module(environment: Environment,
 
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
     bind(classOf[UserRepository]).to(classOf[SlickUserRepositoryInterpreter])
-//    bind(classOf[AirbnbScrapRepository]).to(classOf[WSAirbnbScrapRepositoryInterpreter])
-    bind(classOf[AirbnbScrapRepository]).to(classOf[Http4sAirbnbScrapRepositoryInterpreter])
+    bind(classOf[AirbnbScrapRepository]).to(classOf[WSAirbnbScrapRepositoryInterpreter])
+//    bind(classOf[AirbnbScrapRepository]).to(classOf[Http4sAirbnbScrapRepositoryInterpreter])
     bind(classOf[PropertyRepository]).to(classOf[SlickPropertyRepositoryInterpreter])
 
     bind(new TypeLiteral[UserService[User]] {}).to(classOf[UserServiceInterpreter])

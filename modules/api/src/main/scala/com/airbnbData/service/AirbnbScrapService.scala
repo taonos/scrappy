@@ -1,6 +1,7 @@
 package com.airbnbData.service
 
-import org.http4s.client.Client
+//import org.http4s.client.Client
+import play.api.libs.ws.{WSClient => Client}
 import scalaz.Kleisli
 import slick.jdbc.JdbcBackend.Database
 import com.airbnbData.model._
