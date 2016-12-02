@@ -1,19 +1,13 @@
 package com.airbnbData.slick.repository.interpreter
 
-import com.airbnbData.model
-
-import scala.concurrent.Future
 import scala.language.implicitConversions
 import org.joda.time.DateTime
-import slick.jdbc.JdbcBackend.Database
-
-import scalaz.concurrent.Task
 import scalaz.Kleisli
-import com.airbnbData.util.FutureOps.Implicits._
 import com.airbnbData.model._
 import com.airbnbData.repository.{PropertyRepository, PropertyRepositoryExecutionContext}
 import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.{AirbnbUserPropertiesDAO, AirbnbUsersDAO, PropertiesDAO}
+import monix.eval.Task
 
 
 /**
@@ -39,11 +33,11 @@ class SlickPropertyRepositoryInterpreter
           AirbnbUserProperties += AirbnbUserPropertyRow(uid, pid, DateTime.now)
         }
 
-      db
-        .run(
+      Task.fromFuture(
+        db.run(
           createRelation.transactionally
         )
-        .asTask
+      )
     }
 
   override def bulkCreate(list: Seq[(AirbnbUserCreation, PropertyCreation)]): Operation[Option[Int]] = {
@@ -66,11 +60,11 @@ class SlickPropertyRepositoryInterpreter
           AirbnbUserProperties ++= usersAndProperties
         }
 
-      db
-        .run(
+      Task.fromFuture(
+        db.run(
           createRelations
         )
-        .asTask
+      )
     }
   }
 
@@ -80,14 +74,14 @@ class SlickPropertyRepositoryInterpreter
 
       val deletion = AirbnbUserProperties.delete andThen Properties.delete andThen AirbnbUsers.delete
 
-      db.run(deletion).asTask
+      Task.fromFuture(db.run(deletion))
     }
   }
 
   // TODO: Refactor close function
   override def close(): Kleisli[Task, slick.jdbc.JdbcBackend.Database, Unit] =
     Kleisli { db =>
-      Task.now(db.close())
+      Task { db.close() }
     }
 
   private implicit def airbnbUserToAirbnbUsersRow(user: AirbnbUserCreation): AirbnbUserRow = {

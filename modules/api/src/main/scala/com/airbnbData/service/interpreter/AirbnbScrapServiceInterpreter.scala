@@ -4,12 +4,12 @@ package com.airbnbData.service.interpreter
 import com.airbnbData.model.{AirbnbUserCreation, PropertyCreation}
 import com.airbnbData.repository.PropertyRepositoryExecutionContext
 import com.airbnbData.service.AirbnbScrapService
+import monix.eval.Task
+import monix.scalaz.monixToScalazMonad
 //import org.http4s.client.Client
 import play.api.libs.ws.{WSClient => Client}
 import slick.jdbc.JdbcBackend._
-
 import scalaz.Kleisli
-import scalaz.concurrent.Task
 
 /**
   * Created by Lance on 2016-10-29.

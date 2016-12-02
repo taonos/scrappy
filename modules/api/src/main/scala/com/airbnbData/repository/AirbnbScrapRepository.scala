@@ -1,11 +1,12 @@
 package com.airbnbData.repository
 
+import monix.eval.Task
 import play.api.libs.ws.WSClient
 //import org.http4s.client.Client
 import scalaz.{Kleisli, OptionT}
 import com.airbnbData.model.{AirbnbUserCreation, PropertyCreation}
 
-import scalaz.concurrent.Task
+//import scalaz.concurrent.Task
 
 /**
   * Created by Lance on 2016-10-29.

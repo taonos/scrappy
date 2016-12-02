@@ -6,8 +6,7 @@ import com.vividsolutions.jts.geom.Point
 import slick.jdbc.JdbcBackend.Database
 import com.airbnbData.model._
 import com.airbnbData.model.{AirbnbUser, Property}
-
-import scalaz.concurrent.Task
+import monix.eval.Task
 
 
 /**

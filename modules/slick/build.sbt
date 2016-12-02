@@ -7,9 +7,7 @@ lazy val scalazVersion = "7.2.7"
 lazy val playVersion = "2.5.10"
 lazy val circeVersion = "0.5.1"
 lazy val http4sVersion = "0.14.11a"
-
-scalaVersion := "2.11.8"
-
+lazy val monixVersion = "2.1.1"
 
 libraryDependencies ++=
   Seq(
@@ -33,15 +31,17 @@ libraryDependencies ++=
     "com.typesafe.play" %% "play-ws"
   ).map(_ % playVersion) ++
   Seq(
-    "org.scalaz" %% "scalaz-core",
-    "org.scalaz" %% "scalaz-concurrent"
+    "org.scalaz" %% "scalaz-core"
   ).map(_ % scalazVersion) ++
+  Seq(
+    "io.monix" %% "monix",
+    "io.monix" %% "monix-scalaz-72"
+  ).map(_ % monixVersion) ++
   Seq(
     "org.http4s" %% "http4s-dsl",
     "org.http4s" %% "http4s-blaze-client"
   ).map(_ % http4sVersion) ++
   Seq(
-    "co.fs2" %% "fs2-core" % "0.9.2",
     "com.zaxxer" % "HikariCP" % "2.5.1",
     "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
     "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0"

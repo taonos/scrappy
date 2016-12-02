@@ -6,9 +6,9 @@ import io.circe.parser._
 import io.circe.optics.JsonPath._
 import com.airbnbData.repository.AirbnbScrapRepository
 import com.airbnbData.model.{AirbnbUserCreation, Property, PropertyCreation}
+import monix.eval.Task
+import monix.scalaz.monixToScalazMonad
 import play.api.libs.ws.{WSClient, WSRequest}
-
-import scalaz.concurrent.Task
 
 /**
   * Created by Lance on 2016-11-07.
@@ -133,9 +133,9 @@ private object RequestBuilder {
 
 class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
-  import com.airbnbData.util.FutureOps.Implicits._
+  import monix.execution.Scheduler.Implicits.global
 
-  private def searchUri: Reader[WSClient, WSRequest] = {
+  private val searchUri: Reader[WSClient, WSRequest] = {
     Reader { ws =>
 
       val r = RequestBuilder.QueryRequest()
@@ -246,9 +246,9 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
   private def getListOfIds: Kleisli[Task, WSClient, Seq[Long]] =
     Kleisli { ws =>
-      searchUri.run(ws)
-        .get()
-        .asTask
+      val searchTask = Task.fromFuture(searchUri.run(ws).get())
+
+      searchTask
         // get request body
         .map(_.body)
       //      .andThen { case _ => ws.close() }
@@ -266,10 +266,13 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     Kleisli { ws =>
       val listOfProperties = list
         .map { id =>
-          propertyUri(id, guests)
-            .run(ws)
-            .get()
-            .asTask
+          val propertiesTask = Task.fromFuture(
+            propertyUri(id, guests)
+              .run(ws)
+              .get()
+            )
+
+          propertiesTask
             .map { response =>
               val body = response.body
               // FIXME: handle json parsing failure
@@ -282,6 +285,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
               airbnbUserCreation.flatMap { a => propertyCreation.map((a, _)) }
             }
         }
+
 
       Task.gatherUnordered(listOfProperties)
     }
