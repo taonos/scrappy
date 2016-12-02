@@ -7,6 +7,7 @@ import io.circe.optics.JsonPath._
 import com.airbnbData.repository.AirbnbScrapRepository
 import com.airbnbData.model.{AirbnbUserCreation, Property, PropertyCreation}
 import monix.eval.Task
+import monix.reactive.Observable
 import monix.scalaz.monixToScalazMonad
 import play.api.libs.ws.{WSClient, WSRequest}
 
@@ -41,12 +42,12 @@ private object RequestBuilder {
 
   // TODO: limit must be no more than 50
   case class Limit(v: Int = 50) extends RequestParam[Int] {
-    override val key: String = "limit"
+    override val key: String = "_limit"
   }
 
 
   case class Offset(v: Int = 0) extends RequestParam[Int] {
-    override val key: String = "offset"
+    override val key: String = "_offset"
   }
 
 
@@ -54,7 +55,7 @@ private object RequestBuilder {
     override val key: String = "fetch_facets"
   }
 
-  case class Guests(v: Int = 0) extends RequestParam[Int] {
+  case class Guests(v: Option[Int] = None) extends RequestParam[Option[Int]] {
     override val key: String = "guests"
   }
 
@@ -110,7 +111,7 @@ private object RequestBuilder {
                            limit: Limit = new Limit,
                            offset: Offset = new Offset,
                            fetchFacets: FetchFacet = new FetchFacet,
-                           guests: Guests = new Guests,
+//                           guests: Guests = new Guests,
                            ib: Ib = new Ib,
                            location: Location = new Location,
                            neighborhoods: Neighborhood = new Neighborhood,
@@ -124,9 +125,7 @@ private object RequestBuilder {
                                     clientId: ClientId = new ClientId,
                                     locale: Locale = new Locale,
                                     currency: Currency = new Currency,
-                                    format: Format = new Format,
-                                    source: Source = new Source,
-                                    numberOfGuests: NumberOfGuests
+                                    format: Format = new Format
                                   )
 }
 
@@ -135,12 +134,11 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
   import monix.execution.Scheduler.Implicits.global
 
-  private val searchUri: Reader[WSClient, WSRequest] = {
+  private def searchUri(offset: Int = 0): Reader[WSClient, WSRequest] = {
     Reader { ws =>
 
-      val r = RequestBuilder.QueryRequest()
+      val r = RequestBuilder.QueryRequest(offset = RequestBuilder.Offset(offset))
 
-      // TODO: With DI, should no longer use global instance of `web service`
       ws.url("https://api.airbnb.com/v2/search_results")
         //      .withRequestTimeout(7000)
         .withQueryString(
@@ -150,22 +148,27 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
         r.limit.parameterize,
         r.offset.parameterize,
         r.fetchFacets.parameterize,
-        r.guests.parameterize,
+//        r.guests.parameterize,
         r.ib.parameterize,
         r.location.parameterize,
-        r.neighborhoods.parameterize,
+//        r.neighborhoods.parameterize,
         r.minBathrooms.parameterize,
         r.minBedrooms.parameterize,
         r.minBeds.parameterize,
-        r.sort.parameterize
+        r.sort.parameterize,
+        "neighborhoods" -> "Pudong"
+//        "ne_lat" -> "31.41701547235951",
+//        "ne_lng" -> "121.85279846191406",
+//        "sw_lat" -> "30.9522781728166",
+//        "sw_lng" -> "121.36871337890625"
       )
     }
   }
 
-  private def propertyUri(id: Long, guests: Int): Reader[WSClient, WSRequest] =
+  private def propertyUri(id: Long): Reader[WSClient, WSRequest] =
     Reader { ws =>
 
-      val r = RequestBuilder.PropertyDetailRequest(numberOfGuests = RequestBuilder.NumberOfGuests(guests))
+      val r = RequestBuilder.PropertyDetailRequest()
 
       ws
         .url("https://api.airbnb.com/v2/listings/" + id.toString)
@@ -173,86 +176,22 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
           r.clientId.parameterize,
           r.locale.parameterize,
           r.currency.parameterize,
-          r.format.parameterize,
-          r.source.parameterize,
-          r.numberOfGuests.parameterize
+          r.format.parameterize
+//          r.source.parameterize,
+//          r.numberOfGuests.parameterize
         )
     }
 
-  private def parseAirbnbUserCreation(json: Json): Option[AirbnbUserCreation] = {
-    // create AirbnbUserCreation
-    val userBase = root.listing.user.user
-
-    for {
-      id <- userBase.id.long.getOption(json)
-      firstName <- userBase.first_name.string.getOption(json)
-      about <- userBase.about.string.getOption(json)
-      document <- root.listing.json.getOption(json)
-    } yield AirbnbUserCreation(
-      id,
-      firstName,
-      about,
-      document
-    )
-  }
-
-  private def parsePropertyCreation(json: Json): Option[PropertyCreation] = {
-    val base = root.listing
-
-    val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
-    // create PropertyCreation
-    for {
-      propertyType <- base.property_type.string.getOption(json)
-      publicAddress <- base.public_address.string.getOption(json)
-      roomType <- base.room_type.string.getOption(json)
-      document <- base.json.getOption(json)
-      summary <- base.summary.string.getOption(json)
-      address <- base.address.string.getOption(json)
-      description <- base.description.string.getOption(json)
-      // FIXME: Replace with proper url
-      airbnbUrl <- Some(new java.net.URL("https://www.google.com"))
-      id <- base.id.long.getOption(json)
-      bathrooms <- base.bathrooms.int.getOption(json) match {
-        case None => base.bathrooms.double.getOption(json).map(_.toInt)
-        case Some(v) => Some(v)
-      }
-      bedrooms <- base.bedrooms.int.getOption(json)
-      beds <- base.beds.int.getOption(json)
-      city <- base.city.string.getOption(json)
-      //                    geopoint <- for {
-      //                      lat <- base.lat.double.getOption(json)
-      //                      lng <- base.lng.double.getOption(json)
-      //                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
-      name <- base.name.string.getOption(json)
-      personCapacity <- base.person_capacity.int.getOption(json)
-    } yield PropertyCreation(
-      id,
-      bathrooms,
-      bedrooms,
-      beds,
-      city,
-      name,
-      personCapacity,
-      propertyType,
-      publicAddress,
-      roomType,
-      document,
-      summary,
-      address,
-      description,
-      airbnbUrl
-    )
-  }
-
-  private def getListOfIds: Kleisli[Task, WSClient, Seq[Long]] =
-    Kleisli { ws =>
-      val searchTask = Task.fromFuture(searchUri.run(ws).get())
+  private def getListOfIds(acc: Seq[Long] = List()): Kleisli[Task, WSClient, Seq[Long]] = {
+    Kleisli[Task, WSClient, Seq[Long]] { ws =>
+      val searchTask = Task
+        .fromFuture(searchUri(acc.length).run(ws).get())
 
       searchTask
         // get request body
         .map(_.body)
-      //      .andThen { case _ => ws.close() }
-      //      .andThen { case _ => system.terminate() }
+        //      .andThen { case _ => ws.close() }
+        //      .andThen { case _ => system.terminate() }
         // parse json
         .map(parse)
         // unbox json
@@ -260,14 +199,30 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
         // use optics to navigate json.
         // https://travisbrown.github.io/circe/tut/optics.html
         .map(root.search_results.each.listing.id.long.getAll)
-    }
+        .doOnFinish(_.foldLeft(Task.unit) { case (_, i) =>
+          Task { println(s"Something went wrong with fetching index page:\n$i") }
+        })
 
-  private def getUserAndProp(list: Seq[Long], guests: Int): Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]] = {
+    }
+      .flatMap { newList =>
+        if (newList.isEmpty) {
+          println("No more items to fetch!")
+          // TODO: Implement list as Set.
+          Kleisli { _ => Task { acc.distinct } }
+        }
+        else {
+          println(s"Fetched ${newList.length} items so far:\n$newList")
+          getListOfIds(acc ++ newList)
+        }
+      }
+  }
+
+  private def getUserAndProp(list: Seq[Long]): Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]] = {
     Kleisli { ws =>
       val listOfProperties = list
         .map { id =>
           val propertiesTask = Task.fromFuture(
-            propertyUri(id, guests)
+            propertyUri(id)
               .run(ws)
               .get()
             )
@@ -278,8 +233,8 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
               // FIXME: handle json parsing failure
               val json = parse(body).getOrElse(Json.Null)
 
-              val airbnbUserCreation = parseAirbnbUserCreation(json)
-              val propertyCreation = parsePropertyCreation(json)
+              val airbnbUserCreation = AirbnbUserCreation.fromJson(json)
+              val propertyCreation = PropertyCreation.fromJson(json)
 
 
               airbnbUserCreation.flatMap { a => propertyCreation.map((a, _)) }
@@ -291,10 +246,26 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     }
   }
 
-  override def scrap(guests: Int): Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]] = {
+  override def scrap(): Operation[Seq[Option[(AirbnbUserCreation, PropertyCreation)]]] = {
     for {
-      ids <- getListOfIds
-      list <- getUserAndProp(ids, guests)
+      ids <- getListOfIds()
+      list <- getUserAndProp(ids)
     } yield list
   }
+
+  override def scrap2(): Kleisli[Observable, WSClient, Seq[Long]] = {
+    Kleisli { ws =>
+      Observable.fromTask(getListOfIds().run(ws))
+    }
+  }
+
+//  def logIn()
+
+//  override def scrap3(guests: Int): Operation[List[Option[(AirbnbUserCreation, PropertyCreation)]]] = {
+//    getListOfIds
+//    for {
+//      ids <- getListOfIds
+//      list <- getUserAndProp(ids, guests)
+//    } yield list
+//  }
 }

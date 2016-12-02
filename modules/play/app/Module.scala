@@ -4,7 +4,7 @@ import com.google.inject.{AbstractModule, TypeLiteral}
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
-import slick.jdbc.JdbcBackend.Database
+import slick.jdbc.JdbcBackend.{Database, DatabaseDef}
 import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Environment}
 import com.airbnbData.service._
@@ -19,9 +19,8 @@ class Module(environment: Environment,
 
     bind(classOf[Config]).toInstance(configuration.underlying)
     bind(classOf[UserRepositoryExecutionContext]).toProvider(classOf[SlickUserRepositoryExecutionContextProvider])
-    bind(classOf[PropertyRepositoryExecutionContext]).toProvider(classOf[SlickPropertyRepositoryExecutionContextProvider])
 
-    bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
+    bind(classOf[DatabaseDef]).toProvider(classOf[DatabaseProvider])
     bind(classOf[UserRepository]).to(classOf[SlickUserRepositoryInterpreter])
     bind(classOf[AirbnbScrapRepository]).to(classOf[WSAirbnbScrapRepositoryInterpreter])
 //    bind(classOf[AirbnbScrapRepository]).to(classOf[Http4sAirbnbScrapRepositoryInterpreter])
@@ -36,11 +35,11 @@ class Module(environment: Environment,
 }
 
 @Singleton
-class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
+class DatabaseProvider @Inject() (config: Config) extends Provider[DatabaseDef] {
 
   private val db = Database.forConfig("myapp.database", config)
 
-  override def get(): Database = db
+  override def get(): DatabaseDef = db
 }
 
 @Singleton
@@ -54,22 +53,6 @@ class SlickUserRepositoryExecutionContextProvider @Inject()(actorSystem: akka.ac
 }
 
 class SlickUserRepositoryExecutionContext(ec: ExecutionContext) extends UserRepositoryExecutionContext {
-  override def execute(runnable: Runnable): Unit = ec.execute(runnable)
-
-  override def reportFailure(cause: Throwable): Unit = ec.reportFailure(cause)
-}
-
-@Singleton
-class SlickPropertyRepositoryExecutionContextProvider @Inject()(actorSystem: akka.actor.ActorSystem) extends Provider[PropertyRepositoryExecutionContext] {
-  private val instance = {
-    val ec = actorSystem.dispatchers.lookup("myapp.database-dispatcher")
-    new SlickPropertyRepositoryExecutionContext(ec)
-  }
-
-  override def get() = instance
-}
-
-class SlickPropertyRepositoryExecutionContext(ec: ExecutionContext) extends PropertyRepositoryExecutionContext {
   override def execute(runnable: Runnable): Unit = ec.execute(runnable)
 
   override def reportFailure(cause: Throwable): Unit = ec.reportFailure(cause)

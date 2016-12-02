@@ -27,3 +27,57 @@ case class PropertyCreation(
                              description: String,
                              airbnbUrl: URL
                            )
+
+object PropertyCreation {
+
+  import io.circe._
+  import io.circe.optics.JsonPath._
+
+  def fromJson(json: Json): Option[PropertyCreation] = {
+    val base = root.listing
+
+    //    val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
+    // create PropertyCreation
+    for {
+      propertyType <- base.property_type.string.getOption(json)
+      publicAddress <- base.public_address.string.getOption(json)
+      roomType <- base.room_type.string.getOption(json)
+      document <- base.json.getOption(json)
+      summary <- base.summary.string.getOption(json)
+      address <- base.address.string.getOption(json)
+      description <- base.description.string.getOption(json)
+      // FIXME: Replace with proper url
+      airbnbUrl <- Some(new java.net.URL("https://www.google.com"))
+      id <- base.id.long.getOption(json)
+      bathrooms <- base.bathrooms.int.getOption(json) match {
+        case None => base.bathrooms.double.getOption(json).map(_.toInt)
+        case Some(v) => Some(v)
+      }
+      bedrooms <- base.bedrooms.int.getOption(json)
+      beds <- base.beds.int.getOption(json)
+      city <- base.city.string.getOption(json)
+      //                    geopoint <- for {
+      //                      lat <- base.lat.double.getOption(json)
+      //                      lng <- base.lng.double.getOption(json)
+      //                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
+      name <- base.name.string.getOption(json)
+      personCapacity <- base.person_capacity.int.getOption(json)
+    } yield PropertyCreation(
+      id,
+      bathrooms,
+      bedrooms,
+      beds,
+      city,
+      name,
+      personCapacity,
+      propertyType,
+      publicAddress,
+      roomType,
+      document,
+      summary,
+      address,
+      description,
+      airbnbUrl
+    )
+  }
+}

@@ -3,11 +3,13 @@ package com.airbnbData.slick.repository.interpreter
 import scala.language.implicitConversions
 import org.joda.time.DateTime
 import scalaz.Kleisli
+import slick.jdbc.JdbcBackend.DatabaseDef
 import com.airbnbData.model._
-import com.airbnbData.repository.{PropertyRepository, PropertyRepositoryExecutionContext}
+import com.airbnbData.repository.{PropertyRepository}
 import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.{AirbnbUserPropertiesDAO, AirbnbUsersDAO, PropertiesDAO}
 import monix.eval.Task
+import monix.execution.Scheduler.Implicits.global
 
 
 /**
@@ -22,8 +24,7 @@ class SlickPropertyRepositoryInterpreter
   import profile.api._
 
   override def create(user: AirbnbUserCreation, property: PropertyCreation): Operation[Int] =
-    Kleisli { case (db, ec) =>
-      implicit val context = ec
+    Kleisli { db =>
       // TODO: Could refactor the id extraction part into something generic
       val createProperty = Properties returning Properties.map(_.id) += property
       val createAirbnbUser = AirbnbUsers returning AirbnbUsers.map(_.id) += user
@@ -41,8 +42,7 @@ class SlickPropertyRepositoryInterpreter
     }
 
   override def bulkCreate(list: Seq[(AirbnbUserCreation, PropertyCreation)]): Operation[Option[Int]] = {
-    Kleisli { case (db, ec) =>
-      implicit val context = ec
+    Kleisli { db =>
       // TODO: Could refactor the id extraction part into something generic
       val users = list
         .map { case (a, _) => airbnbUserToAirbnbUsersRow(a) }
@@ -69,8 +69,7 @@ class SlickPropertyRepositoryInterpreter
   }
 
   override def deleteAll() = {
-    Kleisli { case (db, ec) =>
-      implicit val context = ec
+    Kleisli { db =>
 
       val deletion = AirbnbUserProperties.delete andThen Properties.delete andThen AirbnbUsers.delete
 
@@ -79,7 +78,7 @@ class SlickPropertyRepositoryInterpreter
   }
 
   // TODO: Refactor close function
-  override def close(): Kleisli[Task, slick.jdbc.JdbcBackend.Database, Unit] =
+  override def close(): Kleisli[Task, DatabaseDef, Unit] =
     Kleisli { db =>
       Task { db.close() }
     }
