@@ -35,13 +35,13 @@ class SlickPropertyRepositoryInterpreter
       // FIXME: Cannot use `upsert` due to a bug here: https://github.com/slick/slick/issues/966
       count <- (AirbnbUserProperties += AirbnbUserPropertyRow(
         property.belongsTo.id,
-        property.property.id,
-        DateTime.now,
-        Some(DateTime.now)
+        property.property.id
       )).asTry
     } yield count match {
       case Success(v) => v
-      case Failure(_) => 0
+      case Failure(e) =>
+        println(e)
+        0
     }
   }
 
@@ -77,42 +77,8 @@ class SlickPropertyRepositoryInterpreter
     }
   }
 
-  // TODO: Refactor close function
   override def close(): Operation[Unit] =
     Kleisli { db =>
       Task { db.close() }
     }
-
-  private implicit def airbnbUserToAirbnbUsersRow(user: AirbnbUserCreation): AirbnbUserRow = {
-    AirbnbUserRow(
-      user.id,
-      user.firstName,
-      user.about,
-      user.document,
-      DateTime.now,
-      Some(DateTime.now)
-    )
-  }
-
-  private implicit def propertyCreationToPropertiesRow(property: PropertyDetailCreation): PropertyRow = {
-    PropertyRow(
-      property.id,
-      property.bathrooms,
-      property.bedrooms,
-      property.beds,
-      property.city,
-      property.name,
-      property.personCapacity,
-      property.propertyType,
-      property.publicAddress,
-      property.roomType,
-      property.document,
-      property.summary,
-      property.address,
-      property.description,
-      property.airbnbUrl,
-      DateTime.now,
-      Some(DateTime.now)
-    )
-  }
 }

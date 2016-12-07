@@ -18,22 +18,10 @@ class FetchController @Inject() (airbnbScrapService: AirbnbScrapService, airbnbS
 
   def download = Action.async {
 
-//    val e = airbnbScrapService
-//      .scrap2(1)(
-//        airbnbScrapRepository.scrap2
-//      )
-//      .run(client)
-//      .map { result =>
-//        println(result)
-//        Ok(views.html.airbnb(result.foldLeft("") { case (acc, i) => acc + i.toString + "\n" }))
-//      }
-//          .subscribe({result =>})
-
     airbnbScrapService
       .scrap(
         propertyRepo.bulkCreate,
         airbnbScrapRepository.scrap,
-        propertyRepo.close,
         propertyRepo.deleteAll
       )
       .run((client, db))

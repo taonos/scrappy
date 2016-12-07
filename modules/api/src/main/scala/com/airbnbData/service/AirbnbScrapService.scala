@@ -20,7 +20,6 @@ trait AirbnbScrapService {
   def scrap(
              save: Seq[PropertyAndAirbnbUserCreation] => Kleisli[Task, DatabaseDef, Int],
              scrap: () => Kleisli[Task, Client, Seq[Option[PropertyAndAirbnbUserCreation]]],
-             close: () => Kleisli[Task, DatabaseDef, Unit],
              deleteAll: () => Kleisli[Task, DatabaseDef, Int]
            ): Operation[String]
 

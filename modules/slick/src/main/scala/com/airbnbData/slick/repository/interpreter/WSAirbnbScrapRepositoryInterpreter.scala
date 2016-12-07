@@ -278,14 +278,4 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
       Observable.fromTask(getListOfIds().run(ws))
     }
   }
-
-//  def logIn()
-
-//  override def scrap3(guests: Int): Operation[List[Option[PropertyAndAirbnbUserCreation]]] = {
-//    getListOfIds
-//    for {
-//      ids <- getListOfIds
-//      list <- getUserAndProp(ids, guests)
-//    } yield list
-//  }
 }

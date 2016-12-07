@@ -18,7 +18,6 @@ class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
   override def scrap(
                       save: Seq[PropertyAndAirbnbUserCreation] => Kleisli[Task, DatabaseDef, Int],
                       scrap: () => Kleisli[Task, Client, Seq[Option[PropertyAndAirbnbUserCreation]]],
-                      close: () => Kleisli[Task, DatabaseDef, Unit],
                       deleteAll: () => Kleisli[Task, DatabaseDef, Int]
                     ): Operation[String] = {
     for {
@@ -26,7 +25,6 @@ class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
       _ <- deleteAll().local[Dependencies] { case (_, d) => d }
       listOfUsersAndProperties <- scrap().local[Dependencies](_._1).map { list => list.flatMap(_.toList) }
       savedResult <- save(listOfUsersAndProperties).local[Dependencies] { case (_, d) => d }
-      _ <- close().local[Dependencies] { case (_, d) => d }
     } yield savedResult.toString
   }
 
