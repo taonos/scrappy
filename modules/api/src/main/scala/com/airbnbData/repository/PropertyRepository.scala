@@ -1,6 +1,5 @@
 package com.airbnbData.repository
 
-import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Kleisli
 import slick.jdbc.JdbcBackend.DatabaseDef
 import com.airbnbData.model._
@@ -16,11 +15,11 @@ trait PropertyRepository extends Repository {
   type Dependencies = DatabaseDef
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
-  def create(user: AirbnbUserCreation, property: PropertyCreation): Operation[Int]
+  def create(property: PropertyAndAirbnbUserCreation): Operation[Int]
 
-  def bulkCreate(list: Seq[(AirbnbUserCreation, PropertyCreation)]): Operation[Option[Int]]
+  def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): Operation[Int]
 
   def deleteAll(): Operation[Int]
 
-  def close(): Kleisli[Task, DatabaseDef, Unit]
+  def close(): Operation[Unit]
 }

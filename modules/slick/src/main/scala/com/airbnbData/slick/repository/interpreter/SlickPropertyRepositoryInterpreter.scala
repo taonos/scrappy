@@ -2,14 +2,16 @@ package com.airbnbData.slick.repository.interpreter
 
 import scala.language.implicitConversions
 import org.joda.time.DateTime
+
 import scalaz.Kleisli
-import slick.jdbc.JdbcBackend.DatabaseDef
 import com.airbnbData.model._
-import com.airbnbData.repository.{PropertyRepository}
+import com.airbnbData.repository.PropertyRepository
 import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.{AirbnbUserPropertiesDAO, AirbnbUsersDAO, PropertiesDAO}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+
+import scala.util.{Failure, Success}
 
 
 /**
@@ -23,52 +25,50 @@ class SlickPropertyRepositoryInterpreter
 
   import profile.api._
 
-  override def create(user: AirbnbUserCreation, property: PropertyCreation): Operation[Int] =
-    Kleisli { db =>
-      // TODO: Could refactor the id extraction part into something generic
-      val createProperty = Properties returning Properties.map(_.id) += property
-      val createAirbnbUser = AirbnbUsers returning AirbnbUsers.map(_.id) += user
+  private def insert(property: PropertyAndAirbnbUserCreation): DBIO[Int] = {
 
-      val createRelation = (createProperty zip createAirbnbUser)
-        .flatMap { case (pid, uid) =>
-          AirbnbUserProperties += AirbnbUserPropertyRow(uid, pid, DateTime.now)
-        }
-
-      Task.fromFuture(
-        db.run(
-          createRelation.transactionally
-        )
-      )
-    }
-
-  override def bulkCreate(list: Seq[(AirbnbUserCreation, PropertyCreation)]): Operation[Option[Int]] = {
-    Kleisli { db =>
-      // TODO: Could refactor the id extraction part into something generic
-      val users = list
-        .map { case (a, _) => airbnbUserToAirbnbUsersRow(a) }
-      val props = list
-        .map { case (_, p) => propertyCreationToPropertiesRow(p) }
-
-      val createProperty = Properties returning Properties.map(_.id) ++= props
-      val createAirbnbUser = AirbnbUsers returning AirbnbUsers.map(_.id) ++= users
-
-      val createRelations = (createProperty zip createAirbnbUser)
-        .flatMap { case (pid, uid) =>
-          val usersAndProperties = pid zip uid map { case (p, u) =>
-            AirbnbUserPropertyRow(u, p, DateTime.now)
-          }
-          AirbnbUserProperties ++= usersAndProperties
-        }
-
-      Task.fromFuture(
-        db.run(
-          createRelations
-        )
-      )
+    // TODO: Could refactor the id extraction part into something generic
+    for {
+      _ <- (Properties returning Properties.map(_.id) insertOrUpdate property.property).asTry
+      // Check if user is already present in database
+      _ <- (AirbnbUsers returning AirbnbUsers.map(_.id) insertOrUpdate property.belongsTo).asTry
+      // FIXME: Cannot use `upsert` due to a bug here: https://github.com/slick/slick/issues/966
+      count <- (AirbnbUserProperties += AirbnbUserPropertyRow(
+        property.belongsTo.id,
+        property.property.id,
+        DateTime.now,
+        Some(DateTime.now)
+      )).asTry
+    } yield count match {
+      case Success(v) => v
+      case Failure(_) => 0
     }
   }
 
-  override def deleteAll() = {
+  override def create(property: PropertyAndAirbnbUserCreation): Operation[Int] =
+    Kleisli { db =>
+      Task.fromFuture(
+        db.run(
+          insert(property).transactionally
+        )
+      )
+    }
+
+  override def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): Operation[Int] = {
+    Kleisli { db =>
+      Task
+        .fromFuture(
+          db.run(
+            DBIO.sequence(
+              list.map(insert(_).transactionally)
+            )
+          )
+        )
+        .map(_.sum)
+    }
+  }
+
+  override def deleteAll(): Operation[Int] = {
     Kleisli { db =>
 
       val deletion = AirbnbUserProperties.delete andThen Properties.delete andThen AirbnbUsers.delete
@@ -78,7 +78,7 @@ class SlickPropertyRepositoryInterpreter
   }
 
   // TODO: Refactor close function
-  override def close(): Kleisli[Task, DatabaseDef, Unit] =
+  override def close(): Operation[Unit] =
     Kleisli { db =>
       Task { db.close() }
     }
@@ -89,11 +89,12 @@ class SlickPropertyRepositoryInterpreter
       user.firstName,
       user.about,
       user.document,
-      DateTime.now
+      DateTime.now,
+      Some(DateTime.now)
     )
   }
 
-  private implicit def propertyCreationToPropertiesRow(property: PropertyCreation): PropertyRow = {
+  private implicit def propertyCreationToPropertiesRow(property: PropertyDetailCreation): PropertyRow = {
     PropertyRow(
       property.id,
       property.bathrooms,
@@ -110,7 +111,8 @@ class SlickPropertyRepositoryInterpreter
       property.address,
       property.description,
       property.airbnbUrl,
-      DateTime.now
+      DateTime.now,
+      Some(DateTime.now)
     )
   }
 }

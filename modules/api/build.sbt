@@ -5,6 +5,7 @@ lazy val slickVersion = "3.2.0-M1"
 lazy val circeVersion = "0.5.1"
 lazy val http4sVersion = "0.14.11a"
 lazy val monixVersion = "2.1.1"
+lazy val shapelessVersion = "2.3.2"
 
 libraryDependencies ++=
   Seq(
@@ -13,6 +14,9 @@ libraryDependencies ++=
     "io.circe" %% "circe-parser",
     "io.circe" %% "circe-optics"
   ).map(_ % circeVersion) ++
+  Seq(
+    "com.chuusai" %% "shapeless"
+  ).map(_ % shapelessVersion) ++
   Seq(
     "org.scalaz" %% "scalaz-core"
   ).map(_ % scalazVersion) ++

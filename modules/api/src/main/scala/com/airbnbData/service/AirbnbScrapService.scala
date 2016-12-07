@@ -5,7 +5,7 @@ import play.api.libs.ws.{WSClient => Client}
 
 import scalaz.Kleisli
 import slick.jdbc.JdbcBackend.DatabaseDef
-import com.airbnbData.model._
+import com.airbnbData.model.PropertyAndAirbnbUserCreation
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -18,8 +18,9 @@ trait AirbnbScrapService {
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
   def scrap(
-             save: Seq[(AirbnbUserCreation, PropertyCreation)] => Kleisli[Task, DatabaseDef, Option[Int]],
-             scrap: () => Kleisli[Task, Client, Seq[Option[(AirbnbUserCreation, PropertyCreation)]]],
+             save: Seq[PropertyAndAirbnbUserCreation] => Kleisli[Task, DatabaseDef, Int],
+             scrap: () => Kleisli[Task, Client, Seq[Option[PropertyAndAirbnbUserCreation]]],
+             close: () => Kleisli[Task, DatabaseDef, Unit],
              deleteAll: () => Kleisli[Task, DatabaseDef, Int]
            ): Operation[String]
 

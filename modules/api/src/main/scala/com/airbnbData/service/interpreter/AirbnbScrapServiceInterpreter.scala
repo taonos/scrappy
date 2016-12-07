@@ -1,7 +1,7 @@
 package com.airbnbData.service.interpreter
 
 
-import com.airbnbData.model.{AirbnbUserCreation, PropertyCreation}
+import com.airbnbData.model.PropertyAndAirbnbUserCreation
 import com.airbnbData.service.AirbnbScrapService
 import monix.eval.Task
 import monix.reactive.Observable
@@ -16,8 +16,9 @@ import scalaz.Kleisli
   */
 class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
   override def scrap(
-                      save: Seq[(AirbnbUserCreation, PropertyCreation)] => Kleisli[Task, DatabaseDef, Option[Int]],
-                      scrap: () => Kleisli[Task, Client, Seq[Option[(AirbnbUserCreation, PropertyCreation)]]],
+                      save: Seq[PropertyAndAirbnbUserCreation] => Kleisli[Task, DatabaseDef, Int],
+                      scrap: () => Kleisli[Task, Client, Seq[Option[PropertyAndAirbnbUserCreation]]],
+                      close: () => Kleisli[Task, DatabaseDef, Unit],
                       deleteAll: () => Kleisli[Task, DatabaseDef, Int]
                     ): Operation[String] = {
     for {
@@ -25,7 +26,8 @@ class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
       _ <- deleteAll().local[Dependencies] { case (_, d) => d }
       listOfUsersAndProperties <- scrap().local[Dependencies](_._1).map { list => list.flatMap(_.toList) }
       savedResult <- save(listOfUsersAndProperties).local[Dependencies] { case (_, d) => d }
-    } yield savedResult map (_.toString) getOrElse "Something is terribly wrong here!"
+      _ <- close().local[Dependencies] { case (_, d) => d }
+    } yield savedResult.toString
   }
 
   override def scrap2(

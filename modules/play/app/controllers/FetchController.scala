@@ -33,6 +33,7 @@ class FetchController @Inject() (airbnbScrapService: AirbnbScrapService, airbnbS
       .scrap(
         propertyRepo.bulkCreate,
         airbnbScrapRepository.scrap,
+        propertyRepo.close,
         propertyRepo.deleteAll
       )
       .run((client, db))

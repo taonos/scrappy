@@ -9,7 +9,24 @@ import io.circe.Json
   * Created by Lance on 2016-11-22.
   */
 
-case class PropertyCreation(
+case class PropertyAndAirbnbUserCreation(property: PropertyDetailCreation, belongsTo: AirbnbUserCreation)
+
+object PropertyAndAirbnbUserCreation {
+
+  import io.circe.parser._
+
+  def create(body: String): Option[PropertyAndAirbnbUserCreation] = {
+    val json = parse(body).getOrElse(Json.Null)
+
+    for {
+      prop <- PropertyDetailCreation.fromJson(json)
+      user <- AirbnbUserCreation.fromJson(json)
+    } yield PropertyAndAirbnbUserCreation(prop, user)
+
+  }
+}
+
+case class PropertyDetailCreation(
                              id: Long = 0L,
                              //                     belongsTo: Array[AirbnbUser],
                              bathrooms: Int,
@@ -28,16 +45,18 @@ case class PropertyCreation(
                              airbnbUrl: URL
                            )
 
-object PropertyCreation {
+object PropertyDetailCreation {
 
   import io.circe._
   import io.circe.optics.JsonPath._
 
-  def fromJson(json: Json): Option[PropertyCreation] = {
+
+  def fromJson(json: Json): Option[PropertyDetailCreation] = {
     val base = root.listing
 
     //    val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
     // create PropertyCreation
+    // FIXME: Try a cleaner implementation with decoder instead of optics.
     for {
       propertyType <- base.property_type.string.getOption(json)
       publicAddress <- base.public_address.string.getOption(json)
@@ -62,7 +81,7 @@ object PropertyCreation {
       //                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
       name <- base.name.string.getOption(json)
       personCapacity <- base.person_capacity.int.getOption(json)
-    } yield PropertyCreation(
+    } yield PropertyDetailCreation(
       id,
       bathrooms,
       bedrooms,

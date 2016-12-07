@@ -10,7 +10,6 @@ import com.airbnbData.repository.PropertyRepository
   * Created by Lance on 2016-10-26.
   */
 trait PropertyService[Property, AirbnbUser] {
-//  type Valid[A] = NonEmptyList[String] \/ A
   type Valid[A] = EitherT[Future, NonEmptyList[String], A]
   type PropertyOperation[A] = Kleisli[Valid, PropertyRepository, A]
 
