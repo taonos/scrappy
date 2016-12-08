@@ -55,7 +55,6 @@ object PropertyDetailCreation {
     val base = root.listing
 
     //    val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
-    // create PropertyCreation
     // FIXME: Try a cleaner implementation with decoder instead of optics.
     for {
       propertyType <- base.property_type.string.getOption(json)
@@ -65,9 +64,8 @@ object PropertyDetailCreation {
       summary <- base.summary.string.getOption(json)
       address <- base.address.string.getOption(json)
       description <- base.description.string.getOption(json)
-      // FIXME: Replace with proper url
-      airbnbUrl <- Some(new java.net.URL("https://www.google.com"))
       id <- base.id.long.getOption(json)
+      airbnbUrl <- Some(new java.net.URL("https://api.airbnb.com/v2/listings/" + id.toString))
       bathrooms <- base.bathrooms.int.getOption(json) match {
         case None => base.bathrooms.double.getOption(json).map(_.toInt)
         case Some(v) => Some(v)

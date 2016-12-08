@@ -22,7 +22,7 @@ class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
                     ): Operation[String] = {
     for {
       // TODO: for debug purpose only
-      _ <- deleteAll().local[Dependencies] { case (_, d) => d }
+//      _ <- deleteAll().local[Dependencies] { case (_, d) => d }
       listOfUsersAndProperties <- scrap().local[Dependencies](_._1).map { list => list.flatMap(_.toList) }
       savedResult <- save(listOfUsersAndProperties).local[Dependencies] { case (_, d) => d }
     } yield savedResult.toString
