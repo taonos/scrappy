@@ -4,6 +4,7 @@ import scalaz.Kleisli
 import slick.jdbc.JdbcBackend.DatabaseDef
 import com.airbnbData.model._
 import monix.eval.Task
+import monix.reactive.Observable
 
 
 /**
@@ -11,15 +12,19 @@ import monix.eval.Task
   */
 trait PropertyRepository extends Repository {
 
-  type Box[A] = Task[A]
   type Dependencies = DatabaseDef
-  type Operation[A] = Kleisli[Box, Dependencies, A]
+  type TaskOp[A] = Kleisli[Task, Dependencies, A]
+  type ObservableOp[A] = Kleisli[Observable, Dependencies, A]
 
-  def create(property: PropertyAndAirbnbUserCreation): Operation[Int]
+  def create(property: PropertyAndAirbnbUserCreation): TaskOp[Int]
 
-  def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): Operation[Int]
+  def obv_create: (PropertyAndAirbnbUserCreation) => ObservableOp[Int]
 
-  def deleteAll(): Operation[Int]
+  def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): TaskOp[Int]
 
-  def close(): Operation[Unit]
+  def obv_bulkCreate: (Seq[PropertyAndAirbnbUserCreation]) => ObservableOp[Int]
+
+  def deleteAll(): TaskOp[Int]
+
+  def close(): TaskOp[Unit]
 }

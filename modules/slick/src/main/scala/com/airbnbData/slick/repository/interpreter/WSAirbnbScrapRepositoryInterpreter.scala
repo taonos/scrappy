@@ -1,5 +1,7 @@
 package com.airbnbData.slick.repository.interpreter
 
+import akka.stream.OverflowStrategy
+
 import scalaz.{Kleisli, Reader}
 import io.circe._
 import io.circe.parser._
@@ -7,7 +9,7 @@ import io.circe.optics.JsonPath._
 import com.airbnbData.repository.AirbnbScrapRepository
 import com.airbnbData.model.{AirbnbUserCreation, Property, PropertyAndAirbnbUserCreation, PropertyDetailCreation}
 import monix.eval.Task
-import monix.reactive.Observable
+import monix.reactive.{Consumer, Observable, Observer}
 import monix.scalaz.monixToScalazMonad
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
 
@@ -188,13 +190,95 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
   private case class Pagination(next_offset: Int, result_count: Int)
 
+  private def fetchOneListOfIds(pagination: Option[Pagination] = Some(Pagination(0, -1))): Kleisli[Task, WSClient, (Seq[Long], Option[Pagination])] = {
+    Kleisli { ws =>
+      pagination match {
+
+        case Some(pag) if pag.result_count > 0 || pag.result_count == -1 =>
+          val searchTask = Task.defer {
+            Task
+              .fromFuture(searchUri(pag.next_offset).run(ws).get())
+          }
+
+          searchTask
+            // get request body
+            .map(_.body)
+            .onErrorHandle { ex =>
+              println(s"Handling error occured during list fetching!!!: $ex")
+              ""
+            }
+            //      .andThen { case _ => ws.close() }
+            //      .andThen { case _ => system.terminate() }
+            .map { body =>
+              // parse json and unbox json
+              val json = parse(body).getOrElse(Json.Null)
+
+              // use optics to navigate json.
+              // https://travisbrown.github.io/circe/tut/optics.html
+              (root.search_results.each.listing.id.long.getAll(json), root.metadata.pagination.as[Pagination].getOption(json))
+            }
+        case _ =>
+          Task.unit.map { _ => (List(), None) }
+      }
+    }
+  }
+
+  private def fetchIds =
+    fetchOneListOfIds()
+      .mapT[Observable, Seq[Long]] { a =>
+        Observable
+          .fromAsyncStateAction[Option[Pagination], Seq[Long]] { _ => a }(Some(Pagination(0, -1)))
+          .takeWhile(_.nonEmpty)
+          .dump("index page")
+          .doOnComplete(println("End of fethcing ids"))
+      }
+
+  //  {
+//    Kleisli { ws =>
+//
+//      Observable
+//        .fromAsyncStateAction[Option[Pagination], Seq[Long]](fetchOneListOfIds(_).run(ws))(Some(Pagination(0, -1)))
+//        .takeWhile(_.nonEmpty)
+//        .dump("index page")
+//        .doOnComplete(println("End of fethcing ids"))
+//    }
+//
+//  }
+
+  private def fetchPropertyDetailTask(ids: Seq[Long]): Kleisli[Task, WSClient, Seq[Option[PropertyAndAirbnbUserCreation]]] = {
+    Kleisli { ws =>
+
+      val tasks = ids.map { id =>
+        Task
+          .defer {
+            Task.fromFuture(
+              propertyUri(id)
+                .run(ws)
+                .get()
+            )
+          }
+          .map(_.body)
+          .onErrorHandle { ex =>
+            println(s"Handling error occured during individual fetching!!!: $ex")
+            ""
+          }
+          .map(PropertyAndAirbnbUserCreation.create)
+      }
+
+      Task.gatherUnordered(tasks)
+    }
+  }
+
+  private val fetchPropertyDetail: (Seq[Long]) => Kleisli[Observable, Dependencies, Seq[Option[PropertyAndAirbnbUserCreation]]] =
+    fetchPropertyDetailTask(_).mapT[Observable, Seq[Option[PropertyAndAirbnbUserCreation]]](Observable.fromTask)
+
   private def getListOfIds(
                             acc: Seq[Long] = List(),
                             prevPagination: Option[Pagination] = Some(Pagination(-1, -1))
                           ): Kleisli[Task, WSClient, Seq[Long]] = {
     Kleisli[Task, WSClient, (Seq[Long], Option[Pagination])] { ws =>
-      val searchTask: Task[WSResponse] = Task
-        .fromFuture(searchUri(acc.length).run(ws).get())
+      val searchTask: Task[WSResponse] = Task.defer { Task
+        .fromFuture(searchUri(acc.length).run(ws).get()) }
 
       searchTask
         // get request body
@@ -245,11 +329,11 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     Kleisli { ws =>
       val listOfProperties = list
         .map { id =>
-          val propertiesTask = Task.fromFuture(
+          val propertiesTask = Task.defer { Task.fromFuture(
             propertyUri(id)
               .run(ws)
               .get()
-            )
+            )}
 
 
           propertiesTask
@@ -273,9 +357,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     } yield list
   }
 
-  override def scrap2(): Kleisli[Observable, WSClient, Seq[Long]] = {
-    Kleisli { ws =>
-      Observable.fromTask(getListOfIds().run(ws))
-    }
+  override def scrap2(): Kleisli[Observable, WSClient, Seq[Option[PropertyAndAirbnbUserCreation]]] = {
+    fetchIds.flatMap(fetchPropertyDetail)
   }
 }

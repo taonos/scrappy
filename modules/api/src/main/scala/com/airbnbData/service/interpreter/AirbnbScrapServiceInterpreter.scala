@@ -4,7 +4,7 @@ package com.airbnbData.service.interpreter
 import com.airbnbData.model.PropertyAndAirbnbUserCreation
 import com.airbnbData.service.AirbnbScrapService
 import monix.eval.Task
-import monix.reactive.Observable
+import monix.reactive.{Consumer, Observable}
 import monix.scalaz.monixToScalazMonad
 //import org.http4s.client.Client
 import play.api.libs.ws.{WSClient => Client}
@@ -29,8 +29,24 @@ class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
   }
 
   override def scrap2(
-                     scrap2: () => Kleisli[Observable, Client, Seq[Long]]
-  ): Kleisli[Observable, Client, Seq[Long]] = {
-    scrap2()
+                       save: Seq[PropertyAndAirbnbUserCreation] => Kleisli[Observable, DatabaseDef, Int],
+                       scrap: () => Kleisli[Observable, Client, Seq[Option[PropertyAndAirbnbUserCreation]]]
+                     ): Kleisli[Task, (Client, DatabaseDef), Unit] = {
+    Kleisli[Task, (Client, DatabaseDef), Unit] { case (ws, db) =>
+
+      scrap()
+        .map { list => list.flatMap(_.toList) }
+        .run(ws)
+        .mergeMap(save(_).run(db))
+        .consumeWith(Consumer.foreachParallelAsync(10) { v => Task { println(v) } })
+    }
+//      .map { list =>
+//      list.foldLeft("") { (acc, i) =>
+//        i match {
+//          case Some(v) => s"${v.property.id} # ${v.property.name} \n"
+//          case None => acc + "Something went wrong\n"
+//        }
+//      }
+//    }
   }
 }

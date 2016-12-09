@@ -1,6 +1,7 @@
 package com.airbnbData.slick.dao
 
 import com.airbnbData.slick.dao.helper.Profile
+import slick.sql.SqlProfile.ColumnOption.SqlType
 
 /**
   * Created by Lance on 2016-10-12.
@@ -30,19 +31,19 @@ trait PropertiesDAO { self: Profile =>
     *  @param address Database column address SqlType(varchar), Length(200,true)
     *  @param description Database column description SqlType(text)
     *  @param airbnbUrl Database column airbnb_url SqlType(varchar), Length(2038,true)
-    *  @param createdAt Database column created_at SqlType(timestamptz), Default(None)
-    *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
-  case class PropertyRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: Json, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: Option[DateTime] = None, updatedAt: Option[DateTime] = None)
+    *  @param createdAt Database column created_at SqlType(timestamptz)
+    *  @param updatedAt Database column updated_at SqlType(timestamptz) */
+  case class PropertiesRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: Json, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now())
 
-  object PropertyRow {
+  object PropertiesRow {
 
     import com.airbnbData.model.PropertyDetailCreation
     import scala.language.implicitConversions
 
-    def tupled = (PropertyRow.apply _).tupled
+    def tupled = (PropertiesRow.apply _).tupled
 
-    implicit def propertyCreationToPropertiesRow(property: PropertyDetailCreation): PropertyRow = {
-      PropertyRow(
+    implicit def propertyCreationToPropertiesRow(property: PropertyDetailCreation): PropertiesRow = {
+      PropertiesRow(
         property.id,
         property.bathrooms,
         property.bedrooms,
@@ -62,16 +63,16 @@ trait PropertiesDAO { self: Profile =>
     }
   }
 
-  //  /** GetResult implicit for fetching PropertyRow objects using plain SQL queries */
-  //  implicit def GetResultPropertyRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Boolean], e4: GR[DateTime], e5: GR[Option[DateTime]]): GR[PropertyRow] = GR{
-  //    prs => import prs._
-  //      PropertyRow.tupled((<<[Long], <<[Int], <<[Int], <<[Int], <<[String], <<[Boolean], <<[Boolean], <<[Boolean], <<[String], <<[String], <<[Int], <<[String], <<[String], <<[String], <<[String], <<[String], <<[String], <<[String], <<[String], <<[DateTime], <<?[DateTime]))
-  //  }
+  /** GetResult implicit for fetching PropertyRow objects using plain SQL queries */
+  implicit def GetResultPropertiesRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Json], e4: GR[URL], e5: GR[DateTime]): GR[PropertiesRow] = GR{
+    prs => import prs._
+      PropertiesRow.tupled((<<[Long], <<[Int], <<[Int], <<[Int], <<[String], <<[String], <<[Int], <<[String], <<[String], <<[String], <<[Json], <<[String], <<[String], <<[String], <<[URL], <<[DateTime], <<[DateTime]))
+  }
   /** Table description of table properties. Objects of this class serve as prototypes for rows in queries. */
-  protected class PropertiesTable(_tableTag: Tag) extends Table[PropertyRow](_tableTag, "properties") {
-    def * = (id, bathrooms, bedrooms, beds, city, name, personCapacity, propertyType, publicAddress, roomType, document, summary, address, description, airbnbUrl, createdAt, updatedAt) <> (PropertyRow.tupled, PropertyRow.unapply)
+  protected class PropertiesTable(_tableTag: Tag) extends Table[PropertiesRow](_tableTag, "properties") {
+    def * = (id, bathrooms, bedrooms, beds, city, name, personCapacity, propertyType, publicAddress, roomType, document, summary, address, description, airbnbUrl, createdAt, updatedAt) <> (PropertiesRow.tupled, PropertiesRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(bathrooms), Rep.Some(bedrooms), Rep.Some(beds), Rep.Some(city), Rep.Some(name), Rep.Some(personCapacity), Rep.Some(propertyType), Rep.Some(publicAddress), Rep.Some(roomType), Rep.Some(document), Rep.Some(summary), Rep.Some(address), Rep.Some(description), Rep.Some(airbnbUrl), createdAt, updatedAt).shaped.<>({r=>import r._; _1.map(_=> PropertyRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13.get, _14.get, _15.get, _16, _17)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(bathrooms), Rep.Some(bedrooms), Rep.Some(beds), Rep.Some(city), Rep.Some(name), Rep.Some(personCapacity), Rep.Some(propertyType), Rep.Some(publicAddress), Rep.Some(roomType), Rep.Some(document), Rep.Some(summary), Rep.Some(address), Rep.Some(description), Rep.Some(airbnbUrl), Rep.Some(createdAt), Rep.Some(updatedAt)).shaped.<>({r=>import r._; _1.map(_=> PropertiesRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13.get, _14.get, _15.get, _16.get, _17.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(int8), PrimaryKey */
     val id: Rep[Long] = column[Long]("id", O.PrimaryKey)
@@ -103,10 +104,10 @@ trait PropertiesDAO { self: Profile =>
     val description: Rep[String] = column[String]("description")
     /** Database column airbnb_url SqlType(varchar), Length(2038,true) */
     val airbnbUrl: Rep[URL] = column[URL]("airbnb_url", O.Length(2038,varying=true))
-    /** Database column created_at SqlType(timestamptz), Default(None) */
-    val createdAt: Rep[Option[DateTime]] = column[Option[DateTime]]("created_at", O.Default(None))
-    /** Database column updated_at SqlType(timestamptz), Default(None) */
-    val updatedAt: Rep[Option[DateTime]] = column[Option[DateTime]]("updated_at", O.Default(None))
+    /** Database column created_at SqlType(timestamptz) */
+    val createdAt: Rep[DateTime] = column[DateTime]("created_at", SqlType("timestamp with time zone default CURRENT_TIMESTAMP"))
+    /** Database column updated_at SqlType(timestamptz) */
+    val updatedAt: Rep[DateTime] = column[DateTime]("updated_at", SqlType("timestamp with time zone default CURRENT_TIMESTAMP"))
   }
   /** Collection-like TableQuery object for table PropertyTable */
   lazy val Properties = new TableQuery(tag => new PropertiesTable(tag))

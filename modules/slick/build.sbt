@@ -58,7 +58,7 @@ slickCodegenDatabaseUser := databaseUser
 slickCodegenDatabasePassword := databasePassword
 slickCodegenDriver := slick.driver.PostgresDriver
 slickCodegenJdbcDriver := "org.postgresql.Driver"
-slickCodegenOutputPackage := "com.airbnbData.dao.slick"
+slickCodegenOutputPackage := "com.airbnbData.slick.dao"
 slickCodegenExcludedTables := Seq("schema_version")
 
 slickCodegenCodeGenerator := { (model:  m.Model) =>
