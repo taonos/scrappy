@@ -18,11 +18,13 @@ trait PropertyRepository extends Repository {
 
   def create(property: PropertyAndAirbnbUserCreation): TaskOp[Int]
 
-  def obv_create: (PropertyAndAirbnbUserCreation) => ObservableOp[Int]
+  def obv_create: (PropertyAndAirbnbUserCreation) => ObservableOp[Int] =
+    create(_).mapT[Observable, Int](Observable.fromTask)
 
   def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): TaskOp[Int]
 
-  def obv_bulkCreate: (Seq[PropertyAndAirbnbUserCreation]) => ObservableOp[Int]
+  def obv_bulkCreate: (Seq[PropertyAndAirbnbUserCreation]) => ObservableOp[Int] =
+    bulkCreate(_).mapT[Observable, Int](Observable.fromTask)
 
   def deleteAll(): TaskOp[Int]
 

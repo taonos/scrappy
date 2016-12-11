@@ -19,15 +19,8 @@ class FetchController @Inject() (airbnbScrapService: AirbnbScrapService, airbnbS
   def download = Action.async {
 
     airbnbScrapService
-        .scrap2(propertyRepo.obv_bulkCreate, airbnbScrapRepository.scrap2)
-
-//      .scrap(
-//        propertyRepo.bulkCreate,
-//        airbnbScrapRepository.scrap,
-//        propertyRepo.deleteAll
-//      )
+        .scrap2(propertyRepo.obv_create, airbnbScrapRepository.scrap2)
       .run((client, db))
-//      .run(client)
       .map { result =>
         println(result)
         Ok(views.html.airbnb("haha"))

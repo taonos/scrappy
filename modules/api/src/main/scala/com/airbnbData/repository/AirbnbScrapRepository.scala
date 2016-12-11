@@ -18,5 +18,5 @@ trait AirbnbScrapRepository extends Repository {
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
   def scrap(): Operation[Seq[Option[PropertyAndAirbnbUserCreation]]]
-  def scrap2(): Kleisli[Observable, WSClient, Seq[Option[PropertyAndAirbnbUserCreation]]]
+  def scrap2(): Kleisli[Observable, WSClient, PropertyAndAirbnbUserCreation]
 }

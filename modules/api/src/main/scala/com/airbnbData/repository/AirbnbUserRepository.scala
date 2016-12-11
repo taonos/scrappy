@@ -13,8 +13,6 @@ trait AirbnbUserRepository extends Repository {
 
   def all: Future[\/[NonEmptyList[String], Seq[AirbnbUser]]]
 
-
-
   def lookup(id: Long)(implicit ec: AirbnbUserRepositoryExecutionContext): Future[Option[AirbnbUser]]
 
   def all(implicit ec: AirbnbUserRepositoryExecutionContext): Future[Seq[AirbnbUser]]

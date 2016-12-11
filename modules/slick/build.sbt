@@ -8,6 +8,7 @@ lazy val playVersion = "2.5.10"
 lazy val circeVersion = "0.5.1"
 lazy val http4sVersion = "0.14.11a"
 lazy val monixVersion = "2.1.1"
+lazy val shapelessVersion = "2.3.2"
 
 libraryDependencies ++=
   Seq(
@@ -37,6 +38,9 @@ libraryDependencies ++=
     "io.monix" %% "monix",
     "io.monix" %% "monix-scalaz-72"
   ).map(_ % monixVersion) ++
+  Seq(
+    "com.chuusai" %% "shapeless"
+  ).map(_ % shapelessVersion) ++
   Seq(
     "org.http4s" %% "http4s-dsl",
     "org.http4s" %% "http4s-blaze-client"

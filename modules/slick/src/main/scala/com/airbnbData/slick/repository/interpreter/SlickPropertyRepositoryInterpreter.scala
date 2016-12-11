@@ -1,49 +1,61 @@
 package com.airbnbData.slick.repository.interpreter
 
-import scala.language.implicitConversions
-import org.joda.time.DateTime
-
 import scalaz.Kleisli
 import com.airbnbData.model._
 import com.airbnbData.repository.PropertyRepository
-import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
-import com.airbnbData.slick.dao.{AirbnbUserPropertiesDAO, AirbnbUsersDAO, PropertiesDAO}
+import com.airbnbData.slick.dao.helper.{DTO, MyPostgresDriver, Profile}
+import com.airbnbData.slick.dao.{AirbnbUsersDAO, PropertiesDAO}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import slick.jdbc.JdbcBackend.DatabaseDef
+
 import scala.util.{Failure, Success}
 
 
 /**
   * Created by Lance on 2016-11-18.
   */
+
 class SlickPropertyRepositoryInterpreter
-  extends PropertyRepository with Profile with AirbnbUsersDAO with PropertiesDAO with AirbnbUserPropertiesDAO {
+  extends PropertyRepository with Profile with AirbnbUsersDAO with PropertiesDAO {
 
   // Use the custom postgresql driver.
   override val profile: MyPostgresDriver = MyPostgresDriver
 
   import profile.api._
 
-  private def insert(property: PropertyAndAirbnbUserCreation): DBIO[Int] = {
+  private object Mapper {
+    import shapeless.LabelledGeneric
+    import shapeless.record._
+    import shapeless.ops.record._
+    import shapeless.syntax.singleton._
+    import org.joda.time.DateTime
 
-    // TODO: Could refactor the id extraction part into something generic
-    for {
-      _ <- (Properties returning Properties.map(_.id) insertOrUpdate property.property).asTry
-      // Check if user is already present in database
-      _ <- (AirbnbUsers returning AirbnbUsers.map(_.id) insertOrUpdate property.belongsTo).asTry
-      // FIXME: Cannot use `upsert` due to a bug here: https://github.com/slick/slick/issues/966
-      count <- (AirbnbUserProperties += AirbnbUserPropertiesRow(
-        property.belongsTo.id,
-        property.property.id
-      )).asTry
-    } yield count match {
-      case Success(v) => v
-      case Failure(e) =>
-        println(e)
-        0
+    private case class Timestamp(createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now())
+
+    def convert(property: PropertyAndAirbnbUserCreation) = {
+      val airbnbUsersRow = LabelledGeneric[AirbnbUsersRow].from(
+        LabelledGeneric[AirbnbUserCreation].to(property.belongsTo) ++
+          LabelledGeneric[Timestamp].to(Timestamp())
+      )
+
+      val propertiesRow = LabelledGeneric[PropertiesRow].from(
+        LabelledGeneric[PropertyDetailCreation].to(property.property) ++
+          LabelledGeneric[Timestamp].to(Timestamp()) +
+          ('airbnbUserId ->> property.belongsTo.id)
+      )
+
+      (propertiesRow, airbnbUsersRow)
     }
+  }
+
+  private def insert(property: PropertyAndAirbnbUserCreation): DBIO[Int] = {
+    val (prop, user) = Mapper.convert(property)
+    for {
+      _ <- AirbnbUsers insertOrUpdate user
+      _ <- Properties insertOrUpdate prop
+    } yield 1
   }
 
   override def create(property: PropertyAndAirbnbUserCreation): TaskOp[Int] =
@@ -56,9 +68,6 @@ class SlickPropertyRepositoryInterpreter
         )
       }
     }
-
-  override def obv_create: (PropertyAndAirbnbUserCreation) => ObservableOp[Int] =
-    create(_).mapT[Observable, Int](Observable.fromTask)
 
   override def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): TaskOp[Int] = {
     Kleisli { db =>
@@ -76,13 +85,10 @@ class SlickPropertyRepositoryInterpreter
     }
   }
 
-  override def obv_bulkCreate: (Seq[PropertyAndAirbnbUserCreation]) => ObservableOp[Int] =
-    bulkCreate(_).mapT[Observable, Int](Observable.fromTask)
-
   override def deleteAll(): TaskOp[Int] = {
     Kleisli { db =>
 
-      val deletion = AirbnbUserProperties.delete andThen Properties.delete andThen AirbnbUsers.delete
+      val deletion = Properties.delete andThen AirbnbUsers.delete
 
       Task.defer { Task.fromFuture(db.run(deletion)) }
     }

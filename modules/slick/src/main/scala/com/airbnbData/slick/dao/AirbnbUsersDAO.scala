@@ -8,6 +8,7 @@ import slick.sql.SqlProfile.ColumnOption.SqlType
   */
 trait AirbnbUsersDAO { self: Profile =>
 
+  import com.airbnbData.slick.dao.helper.DTO
   import org.joda.time.DateTime
   import io.circe.Json
   import profile.api._
@@ -22,22 +23,7 @@ trait AirbnbUsersDAO { self: Profile =>
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz) */
   case class AirbnbUsersRow(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now())
-
-  object AirbnbUsersRow {
-
-    import com.airbnbData.model.AirbnbUserCreation
-    import scala.language.implicitConversions
-
-    def tupled = (AirbnbUsersRow.apply _).tupled
-
-    implicit def airbnbUserToAirbnbUsersRow(user: AirbnbUserCreation): AirbnbUsersRow =
-      AirbnbUsersRow(
-        user.id,
-        user.firstName,
-        user.about,
-        user.document
-      )
-  }
+    extends DTO
 
   /** GetResult implicit for fetching AirbnbUsersRow objects using plain SQL queries */
   implicit def GetResultAirbnbUsersRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Json], e3: GR[DateTime]): GR[AirbnbUsersRow] = GR{

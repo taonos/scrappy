@@ -1,6 +1,6 @@
 package com.airbnbData.slick.dao
 
-import com.airbnbData.slick.dao.helper.Profile
+import com.airbnbData.slick.dao.helper.{DTO, Profile}
 
 /**
   * Created by Lance on 2016-10-11.
@@ -18,11 +18,12 @@ trait UsersDAO { self: Profile =>
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
   case class UsersRow(id: java.util.UUID, email: String, createdAt: DateTime, updatedAt: Option[DateTime] = None)
-//  /** GetResult implicit for fetching UsersRow objects using plain SQL queries */
-//  implicit def GetResultUsersRow(implicit e0: GR[java.util.UUID], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[UsersRow] = GR{
-//    prs => import prs._
-//      UsersRow.tupled((<<[java.util.UUID], <<[String], <<[DateTime], <<?[DateTime], <<[JsValue]))
-//  }
+    extends DTO
+  /** GetResult implicit for fetching UsersRow objects using plain SQL queries */
+  implicit def GetResultUsersRow(implicit e0: GR[java.util.UUID], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[UsersRow] = GR{
+    prs => import prs._
+      UsersRow.tupled((<<[java.util.UUID], <<[String], <<[DateTime], <<?[DateTime]))
+  }
   /** Table description of table users. Objects of this class serve as prototypes for rows in queries. */
   protected class UsersTable(_tableTag: Tag) extends Table[UsersRow](_tableTag, "users") {
     def * = (id, email, createdAt, updatedAt) <> (UsersRow.tupled, UsersRow.unapply)

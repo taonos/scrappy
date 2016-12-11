@@ -9,23 +9,6 @@ import io.circe.Json
   * Created by Lance on 2016-11-22.
   */
 
-case class PropertyAndAirbnbUserCreation(property: PropertyDetailCreation, belongsTo: AirbnbUserCreation)
-
-object PropertyAndAirbnbUserCreation {
-
-  import io.circe.parser._
-
-  def create(body: String): Option[PropertyAndAirbnbUserCreation] = {
-    val json = parse(body).getOrElse(Json.Null)
-
-    for {
-      prop <- PropertyDetailCreation.fromJson(json)
-      user <- AirbnbUserCreation.fromJson(json)
-    } yield PropertyAndAirbnbUserCreation(prop, user)
-
-  }
-}
-
 case class PropertyDetailCreation(
                              id: Long = 0L,
                              //                     belongsTo: Array[AirbnbUser],
@@ -43,7 +26,7 @@ case class PropertyDetailCreation(
                              address: String,
                              description: String,
                              airbnbUrl: URL
-                           )
+                           ) extends CommandModel
 
 object PropertyDetailCreation {
 

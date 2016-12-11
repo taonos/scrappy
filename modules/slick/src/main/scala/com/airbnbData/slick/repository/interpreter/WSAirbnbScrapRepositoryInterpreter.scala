@@ -223,7 +223,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     }
   }
 
-  private def fetchIds =
+  private val fetchIds =
     fetchOneListOfIds()
       .mapT[Observable, Seq[Long]] { a =>
         Observable
@@ -233,21 +233,8 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
           .doOnComplete(println("End of fethcing ids"))
       }
 
-  //  {
-//    Kleisli { ws =>
-//
-//      Observable
-//        .fromAsyncStateAction[Option[Pagination], Seq[Long]](fetchOneListOfIds(_).run(ws))(Some(Pagination(0, -1)))
-//        .takeWhile(_.nonEmpty)
-//        .dump("index page")
-//        .doOnComplete(println("End of fethcing ids"))
-//    }
-//
-//  }
-
-  private def fetchPropertyDetailTask(ids: Seq[Long]): Kleisli[Task, WSClient, Seq[Option[PropertyAndAirbnbUserCreation]]] = {
+  private def fetchPropertyDetailTask(ids: Seq[Long]): Kleisli[Task, WSClient, List[Option[PropertyAndAirbnbUserCreation]]] = {
     Kleisli { ws =>
-
       val tasks = ids.map { id =>
         Task
           .defer {
@@ -265,12 +252,20 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
           .map(PropertyAndAirbnbUserCreation.create)
       }
 
+
       Task.gatherUnordered(tasks)
     }
   }
 
-  private val fetchPropertyDetail: (Seq[Long]) => Kleisli[Observable, Dependencies, Seq[Option[PropertyAndAirbnbUserCreation]]] =
-    fetchPropertyDetailTask(_).mapT[Observable, Seq[Option[PropertyAndAirbnbUserCreation]]](Observable.fromTask)
+  private val fetchPropertyDetail: (Seq[Long]) => Kleisli[Observable, Dependencies, PropertyAndAirbnbUserCreation] =
+    fetchPropertyDetailTask(_)
+      .mapT(Observable
+        .fromTask(_)
+        // flatten Seq[Long] into just Long
+        .mergeMap(Observable.fromIterable)
+        .filter(_.nonEmpty)
+        .map(_.get)
+      )
 
   private def getListOfIds(
                             acc: Seq[Long] = List(),
@@ -357,7 +352,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     } yield list
   }
 
-  override def scrap2(): Kleisli[Observable, WSClient, Seq[Option[PropertyAndAirbnbUserCreation]]] = {
+  override def scrap2(): Kleisli[Observable, WSClient, PropertyAndAirbnbUserCreation] = {
     fetchIds.flatMap(fetchPropertyDetail)
   }
 }
