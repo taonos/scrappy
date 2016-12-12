@@ -1,7 +1,8 @@
-package com.airbnbData.model
+package com.airbnbData.model.query
+
+import java.net.URL
 
 import org.joda.time.DateTime
-import java.net.URL
 
 
 /**

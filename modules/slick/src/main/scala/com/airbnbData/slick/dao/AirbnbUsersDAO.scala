@@ -26,7 +26,7 @@ trait AirbnbUsersDAO { self: Profile =>
     extends DTO
 
   /** GetResult implicit for fetching AirbnbUsersRow objects using plain SQL queries */
-  implicit def GetResultAirbnbUsersRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Json], e3: GR[DateTime]): GR[AirbnbUsersRow] = GR{
+  implicit def getResultAirbnbUsersRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Json], e3: GR[DateTime]): GR[AirbnbUsersRow] = GR{
     prs => import prs._
       AirbnbUsersRow.tupled((<<[Long], <<[String], <<[String], <<[Json], <<[DateTime], <<[DateTime]))
   }

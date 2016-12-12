@@ -1,9 +1,10 @@
 package com.airbnbData.repository
 
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
 
-import com.airbnbData.model.User
+import com.airbnbData.model.query.User
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by Lance on 2016-10-26.

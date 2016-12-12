@@ -1,13 +1,13 @@
 package com.airbnbData.slick.repository.interpreter
 
-import akka.stream.OverflowStrategy
+
+import com.airbnbData.model.command.PropertyAndAirbnbUserCommand
 
 import scalaz.{Kleisli, Reader}
 import io.circe._
 import io.circe.parser._
 import io.circe.optics.JsonPath._
 import com.airbnbData.repository.AirbnbScrapRepository
-import com.airbnbData.model.{AirbnbUserCreation, Property, PropertyAndAirbnbUserCreation, PropertyDetailCreation}
 import monix.eval.Task
 import monix.reactive.{Consumer, Observable, Observer}
 import monix.scalaz.monixToScalazMonad
@@ -190,6 +190,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
 
   private case class Pagination(next_offset: Int, result_count: Int)
 
+  @SuppressWarnings(Array("AsInstanceOf"))
   private def fetchOneListOfIds(pagination: Option[Pagination] = Some(Pagination(0, -1))): Kleisli[Task, WSClient, (Seq[Long], Option[Pagination])] = {
     Kleisli { ws =>
       pagination match {
@@ -211,7 +212,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
             //      .andThen { case _ => system.terminate() }
             .map { body =>
               // parse json and unbox json
-              val json = parse(body).getOrElse(Json.Null)
+              val json = parse(body).fold({ _ => Json.Null }, identity)
 
               // use optics to navigate json.
               // https://travisbrown.github.io/circe/tut/optics.html
@@ -233,7 +234,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
           .doOnComplete(println("End of fethcing ids"))
       }
 
-  private def fetchPropertyDetailTask(ids: Seq[Long]): Kleisli[Task, WSClient, List[Option[PropertyAndAirbnbUserCreation]]] = {
+  private def fetchPropertyDetailTask(ids: Seq[Long]): Kleisli[Task, WSClient, List[Option[PropertyAndAirbnbUserCommand]]] = {
     Kleisli { ws =>
       val tasks = ids.map { id =>
         Task
@@ -249,7 +250,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
             println(s"Handling error occured during individual fetching!!!: $ex")
             ""
           }
-          .map(PropertyAndAirbnbUserCreation.create)
+          .map(PropertyAndAirbnbUserCommand.create)
       }
 
 
@@ -257,7 +258,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
     }
   }
 
-  private val fetchPropertyDetail: (Seq[Long]) => Kleisli[Observable, Dependencies, PropertyAndAirbnbUserCreation] =
+  private val fetchPropertyDetail: (Seq[Long]) => Kleisli[Observable, Dependencies, PropertyAndAirbnbUserCommand] =
     fetchPropertyDetailTask(_)
       .mapT(Observable
         .fromTask(_)
@@ -267,92 +268,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
         .map(_.get)
       )
 
-  private def getListOfIds(
-                            acc: Seq[Long] = List(),
-                            prevPagination: Option[Pagination] = Some(Pagination(-1, -1))
-                          ): Kleisli[Task, WSClient, Seq[Long]] = {
-    Kleisli[Task, WSClient, (Seq[Long], Option[Pagination])] { ws =>
-      val searchTask: Task[WSResponse] = Task.defer { Task
-        .fromFuture(searchUri(acc.length).run(ws).get()) }
-
-      searchTask
-        // get request body
-        .map(_.body)
-        .onErrorHandle { ex =>
-          println(s"Handling error occured during list fetching!!!: $ex")
-          ""
-        }
-        //      .andThen { case _ => ws.close() }
-        //      .andThen { case _ => system.terminate() }
-        // parse json
-        .map(parse)
-        // unbox json
-        .map(_.getOrElse(Json.Null))
-        // use optics to navigate json.
-        // https://travisbrown.github.io/circe/tut/optics.html
-        .map { json =>
-          (root.search_results.each.listing.id.long.getAll(json), root.metadata.pagination.as[Pagination].getOption(json))
-        }
-
-    }
-      .flatMap { case (newList, curPagination) =>
-        val endReached = for {
-          c <- curPagination
-          p <- prevPagination
-        } yield c.next_offset == p.next_offset || c.result_count == 0
-
-        endReached match {
-          case Some(v) =>
-            if (v) {
-              println("No more items to fetch!")
-              // TODO: Implement list as Set.
-              Kleisli { _ => Task { acc.distinct } }
-            }
-            else {
-              println(s"Fetched ${newList.length} new items this run!\n$newList")
-              getListOfIds(acc ++ newList, curPagination)
-            }
-          case None =>
-            println("Something wrong with parsing pagination data!!!")
-            // TODO: Implement list as Set.
-            Kleisli { _ => Task { acc.distinct } }
-        }
-      }
-  }
-
-  private def getUserAndProp(list: Seq[Long]): Operation[List[Option[PropertyAndAirbnbUserCreation]]] = {
-    Kleisli { ws =>
-      val listOfProperties = list
-        .map { id =>
-          val propertiesTask = Task.defer { Task.fromFuture(
-            propertyUri(id)
-              .run(ws)
-              .get()
-            )}
-
-
-          propertiesTask
-            .map(_.body)
-            .onErrorHandle { ex =>
-              println(s"Handling error occured during individual fetching!!!: $ex")
-              ""
-            }
-            .map(PropertyAndAirbnbUserCreation.create)
-        }
-
-
-      Task.gatherUnordered(listOfProperties)
-    }
-  }
-
-  override def scrap(): Operation[Seq[Option[PropertyAndAirbnbUserCreation]]] = {
-    for {
-      ids <- getListOfIds()
-      list <- getUserAndProp(ids)
-    } yield list
-  }
-
-  override def scrap2(): Kleisli[Observable, WSClient, PropertyAndAirbnbUserCreation] = {
+  override def scrap(): Kleisli[Observable, WSClient, PropertyAndAirbnbUserCommand] = {
     fetchIds.flatMap(fetchPropertyDetail)
   }
 }

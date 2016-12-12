@@ -2,6 +2,7 @@ package com.airbnbData.slick.repository.interpreter
 
 import scalaz.Kleisli
 import com.airbnbData.model._
+import com.airbnbData.model.command.{AirbnbUserCommand, PropertyAndAirbnbUserCommand, PropertyDetailCommand}
 import com.airbnbData.repository.PropertyRepository
 import com.airbnbData.slick.dao.helper.{DTO, MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.{AirbnbUsersDAO, PropertiesDAO}
@@ -34,14 +35,15 @@ class SlickPropertyRepositoryInterpreter
 
     private case class Timestamp(createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now())
 
-    def convert(property: PropertyAndAirbnbUserCreation) = {
+    @SuppressWarnings(Array("AsInstanceOf"))
+    def convert(property: PropertyAndAirbnbUserCommand) = {
       val airbnbUsersRow = LabelledGeneric[AirbnbUsersRow].from(
-        LabelledGeneric[AirbnbUserCreation].to(property.belongsTo) ++
+        LabelledGeneric[AirbnbUserCommand].to(property.belongsTo) ++
           LabelledGeneric[Timestamp].to(Timestamp())
       )
 
       val propertiesRow = LabelledGeneric[PropertiesRow].from(
-        LabelledGeneric[PropertyDetailCreation].to(property.property) ++
+        LabelledGeneric[PropertyDetailCommand].to(property.property) ++
           LabelledGeneric[Timestamp].to(Timestamp()) +
           ('airbnbUserId ->> property.belongsTo.id)
       )
@@ -50,7 +52,7 @@ class SlickPropertyRepositoryInterpreter
     }
   }
 
-  private def insert(property: PropertyAndAirbnbUserCreation): DBIO[Int] = {
+  private def insert(property: PropertyAndAirbnbUserCommand): DBIO[Int] = {
     val (prop, user) = Mapper.convert(property)
     for {
       _ <- AirbnbUsers insertOrUpdate user
@@ -58,7 +60,7 @@ class SlickPropertyRepositoryInterpreter
     } yield 1
   }
 
-  override def create(property: PropertyAndAirbnbUserCreation): TaskOp[Int] =
+  override def create(property: PropertyAndAirbnbUserCommand): TaskOp[Int] =
     Kleisli { db =>
       Task.defer {
         Task.fromFuture(
@@ -69,7 +71,7 @@ class SlickPropertyRepositoryInterpreter
       }
     }
 
-  override def bulkCreate(list: Seq[PropertyAndAirbnbUserCreation]): TaskOp[Int] = {
+  override def bulkCreate(list: Seq[PropertyAndAirbnbUserCommand]): TaskOp[Int] = {
     Kleisli { db =>
       Task.defer {
         Task

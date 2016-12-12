@@ -1,11 +1,11 @@
 package com.airbnbData.repository
 
+import com.airbnbData.model.command.PropertyAndAirbnbUserCommand
 import monix.eval.Task
 import monix.reactive.Observable
 import play.api.libs.ws.WSClient
 //import org.http4s.client.Client
-import scalaz.{Kleisli, OptionT}
-import com.airbnbData.model.{PropertyAndAirbnbUserCreation}
+import scalaz.{Kleisli}
 
 /**
   * Created by Lance on 2016-10-29.
@@ -17,6 +17,5 @@ trait AirbnbScrapRepository extends Repository {
   type Dependencies = WSClient
   type Operation[A] = Kleisli[Box, Dependencies, A]
 
-  def scrap(): Operation[Seq[Option[PropertyAndAirbnbUserCreation]]]
-  def scrap2(): Kleisli[Observable, WSClient, PropertyAndAirbnbUserCreation]
+  def scrap(): Kleisli[Observable, WSClient, PropertyAndAirbnbUserCommand]
 }

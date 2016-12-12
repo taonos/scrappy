@@ -1,8 +1,8 @@
-package com.airbnbData.model
+package com.airbnbData.model.query
 
 import java.util.UUID
 
-import org.joda.time.{DateTime, Instant}
+import org.joda.time.DateTime
 
 
 

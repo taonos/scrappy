@@ -40,7 +40,7 @@ trait PropertiesDAO extends AirbnbUsersDAO { self: Profile =>
     extends DTO
 
   /** GetResult implicit for fetching PropertyRow objects using plain SQL queries */
-  implicit def GetResultPropertiesRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Json], e4: GR[URL], e5: GR[DateTime]): GR[PropertiesRow] = GR{
+  implicit def getResultPropertiesRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Json], e4: GR[URL], e5: GR[DateTime]): GR[PropertiesRow] = GR{
     prs => import prs._
       PropertiesRow.tupled((<<[Long], <<[Int], <<[Int], <<[Int], <<[String], <<[String], <<[Int], <<[String], <<[String], <<[String], <<[Json], <<[String], <<[String], <<[String], <<[URL], <<[DateTime], <<[DateTime], <<[Long]))
   }

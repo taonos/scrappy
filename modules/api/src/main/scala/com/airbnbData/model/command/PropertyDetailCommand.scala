@@ -1,15 +1,14 @@
-package com.airbnbData.model
+package com.airbnbData.model.command
 
 import java.net.URL
 
-import com.vividsolutions.jts.geom.Point
 import io.circe.Json
 
 /**
   * Created by Lance on 2016-11-22.
   */
 
-case class PropertyDetailCreation(
+case class PropertyDetailCommand(
                              id: Long = 0L,
                              //                     belongsTo: Array[AirbnbUser],
                              bathrooms: Int,
@@ -26,15 +25,15 @@ case class PropertyDetailCreation(
                              address: String,
                              description: String,
                              airbnbUrl: URL
-                           ) extends CommandModel
+                           ) extends Command
 
-object PropertyDetailCreation {
+object PropertyDetailCommand {
 
   import io.circe._
   import io.circe.optics.JsonPath._
 
 
-  def fromJson(json: Json): Option[PropertyDetailCreation] = {
+  def fromJson(json: Json): Option[PropertyDetailCommand] = {
     val base = root.listing
 
     //    val geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory(new com.vividsolutions.jts.geom.PrecisionModel())
@@ -62,7 +61,7 @@ object PropertyDetailCreation {
       //                    } yield geometryFactory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lng, lat))
       name <- base.name.string.getOption(json)
       personCapacity <- base.person_capacity.int.getOption(json)
-    } yield PropertyDetailCreation(
+    } yield PropertyDetailCommand(
       id,
       bathrooms,
       bedrooms,

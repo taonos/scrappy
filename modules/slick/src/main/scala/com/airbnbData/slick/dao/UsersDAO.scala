@@ -20,7 +20,7 @@ trait UsersDAO { self: Profile =>
   case class UsersRow(id: java.util.UUID, email: String, createdAt: DateTime, updatedAt: Option[DateTime] = None)
     extends DTO
   /** GetResult implicit for fetching UsersRow objects using plain SQL queries */
-  implicit def GetResultUsersRow(implicit e0: GR[java.util.UUID], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[UsersRow] = GR{
+  implicit def getResultUsersRow(implicit e0: GR[java.util.UUID], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[UsersRow] = GR{
     prs => import prs._
       UsersRow.tupled((<<[java.util.UUID], <<[String], <<[DateTime], <<?[DateTime]))
   }

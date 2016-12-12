@@ -1,5 +1,6 @@
 import javax.inject.{Inject, Provider, Singleton}
 
+import com.airbnbData.model.query.User
 import com.google.inject.{AbstractModule, TypeLiteral}
 import com.typesafe.config.Config
 
@@ -8,7 +9,6 @@ import slick.jdbc.JdbcBackend.{Database, DatabaseDef}
 import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Environment}
 import com.airbnbData.service._
-import com.airbnbData.model.User
 import com.airbnbData.repository._
 import com.airbnbData.service.interpreter._
 import com.airbnbData.slick.repository.interpreter._

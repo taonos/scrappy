@@ -1,10 +1,11 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+
+import com.airbnbData.model.query.User
 import play.api.mvc._
 import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
 import com.airbnbData.service.UserService
-import com.airbnbData.model.{User}
 
 @Singleton
 class HomeController @Inject() (userService: UserService[User], userRepository: UserRepository, userRepositoryExecutionContext: UserRepositoryExecutionContext) extends Controller {

@@ -1,7 +1,6 @@
 package com.airbnbData.service.interpreter
 
-
-import com.airbnbData.model.PropertyAndAirbnbUserCreation
+import com.airbnbData.model.command.PropertyAndAirbnbUserCommand
 import com.airbnbData.service.AirbnbScrapService
 import monix.eval.Task
 import monix.reactive.{Consumer, Observable}
@@ -16,8 +15,8 @@ import scalaz.Kleisli
   */
 class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
   override def scrap(
-                      save: Seq[PropertyAndAirbnbUserCreation] => Kleisli[Task, DatabaseDef, Int],
-                      scrap: () => Kleisli[Task, Client, Seq[Option[PropertyAndAirbnbUserCreation]]],
+                      save: Seq[PropertyAndAirbnbUserCommand] => Kleisli[Task, DatabaseDef, Int],
+                      scrap: () => Kleisli[Task, Client, Seq[Option[PropertyAndAirbnbUserCommand]]],
                       deleteAll: () => Kleisli[Task, DatabaseDef, Int]
                     ): Operation[String] = {
     for {
@@ -29,8 +28,8 @@ class AirbnbScrapServiceInterpreter extends AirbnbScrapService {
   }
 
   override def scrap2(
-                       save: PropertyAndAirbnbUserCreation => Kleisli[Observable, DatabaseDef, Int],
-                       scrap: () => Kleisli[Observable, Client, PropertyAndAirbnbUserCreation]
+                       save: PropertyAndAirbnbUserCommand => Kleisli[Observable, DatabaseDef, Int],
+                       scrap: () => Kleisli[Observable, Client, PropertyAndAirbnbUserCommand]
                      ): Kleisli[Task, (Client, DatabaseDef), Unit] = {
     Kleisli[Task, (Client, DatabaseDef), Unit] { case (ws, db) =>
 

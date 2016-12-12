@@ -19,7 +19,7 @@ class FetchController @Inject() (airbnbScrapService: AirbnbScrapService, airbnbS
   def download = Action.async {
 
     airbnbScrapService
-        .scrap2(propertyRepo.obv_create, airbnbScrapRepository.scrap2)
+        .scrap2(propertyRepo.obvCreate, airbnbScrapRepository.scrap)
       .run((client, db))
       .map { result =>
         println(result)

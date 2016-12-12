@@ -17,5 +17,5 @@ libraryDependencies += "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.10")
 
-//addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M14-6")
+//addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M15-1")
 

@@ -1,16 +1,13 @@
-package com.airbnbData.model
+package com.airbnbData.model.query
 
 import io.circe.Json
 import org.joda.time.DateTime
 
-import scalaz.{NonEmptyList, ValidationNel, \/}
 import scalaz.Scalaz._
+import scalaz.{NonEmptyList, ValidationNel, \/}
 
 /**
   * Implementation independent aggregate root.
-  *
-  * Note that this uses Joda Time classes and UUID, which are specifically mapped
-  * through the custom postgres driver.
   */
 case class AirbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: Option[DateTime])
 

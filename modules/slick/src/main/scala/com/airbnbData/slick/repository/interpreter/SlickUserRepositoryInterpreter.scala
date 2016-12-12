@@ -3,11 +3,12 @@ package com.airbnbData.slick.repository.interpreter
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
+import com.airbnbData.model.query.User
+
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import org.joda.time.DateTime
 import slick.jdbc.JdbcBackend.Database
-import com.airbnbData.model.User
 import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
 import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.UsersDAO

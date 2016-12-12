@@ -1,10 +1,9 @@
 package com.airbnbData.repository
 
+import com.airbnbData.model.query.AirbnbUser
+
 import scala.concurrent.{ExecutionContext, Future}
-
 import scalaz._
-
-import com.airbnbData.model.AirbnbUser
 
 /**
   * An implementation dependent Repository.  This could be implemented by Slick, Cassandra, or a REST API.

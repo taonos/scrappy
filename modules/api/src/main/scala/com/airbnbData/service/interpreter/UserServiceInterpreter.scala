@@ -1,6 +1,6 @@
 package com.airbnbData.service.interpreter
 
-import com.airbnbData.model.User
+import com.airbnbData.model.query.User
 import com.airbnbData.repository.{UserRepository, UserRepositoryExecutionContext}
 import com.airbnbData.service.UserService
 

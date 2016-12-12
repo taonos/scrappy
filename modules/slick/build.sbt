@@ -1,12 +1,12 @@
 import slick.codegen.SourceCodeGenerator
 import slick.{ model => m }
 
-lazy val slickPgVersion = "0.15.0-M2"
-lazy val slickVersion = "3.2.0-M1"
-lazy val scalazVersion = "7.2.7"
+lazy val slickPgVersion = "0.15.0-M3"
+lazy val slickVersion = "3.2.0-M2"
+lazy val scalazVersion = "7.2.8"
 lazy val playVersion = "2.5.10"
-lazy val circeVersion = "0.5.1"
-lazy val http4sVersion = "0.14.11a"
+lazy val circeVersion = "0.6.1"
+lazy val http4sVersion = "0.15.0a"
 lazy val monixVersion = "2.1.1"
 lazy val shapelessVersion = "2.3.2"
 
@@ -48,7 +48,7 @@ libraryDependencies ++=
   Seq(
     "com.zaxxer" % "HikariCP" % "2.5.1",
     "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
-    "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0"
+    "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0"
   )
 
 
