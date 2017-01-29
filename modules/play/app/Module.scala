@@ -1,6 +1,6 @@
 import javax.inject.{Inject, Provider, Singleton}
 
-import com.airbnbData.model.query.User
+import com.airbnbData.model.query.{Property, User}
 import com.google.inject.{AbstractModule, TypeLiteral}
 import com.typesafe.config.Config
 
@@ -28,6 +28,7 @@ class Module(environment: Environment,
 
     bind(new TypeLiteral[UserService[User]] {}).to(classOf[UserServiceInterpreter])
     bind(classOf[AirbnbScrapService]).to(classOf[AirbnbScrapServiceInterpreter])
+    bind(new TypeLiteral[PropertyService[Property]] {}).to(classOf[PropertyServiceInterpreter])
 
     bind(classOf[UserRepositoryCloseHook]).asEagerSingleton()
     bind(classOf[PropertyRepositoryCloseHook]).asEagerSingleton()

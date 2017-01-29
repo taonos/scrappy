@@ -3,6 +3,7 @@ package com.airbnbData.repository
 import scalaz.Kleisli
 import slick.jdbc.JdbcBackend.DatabaseDef
 import com.airbnbData.model.command.PropertyAndAirbnbUserCommand
+import com.airbnbData.model.query.Property
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -15,6 +16,8 @@ trait PropertyRepository extends Repository {
   type Dependencies = DatabaseDef
   type TaskOp[A] = Kleisli[Task, Dependencies, A]
   type ObservableOp[A] = Kleisli[Observable, Dependencies, A]
+
+  def all(): ObservableOp[Property]
 
   def create(property: PropertyAndAirbnbUserCommand): TaskOp[Int]
 

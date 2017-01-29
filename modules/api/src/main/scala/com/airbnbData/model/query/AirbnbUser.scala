@@ -9,7 +9,7 @@ import scalaz.{NonEmptyList, ValidationNel, \/}
 /**
   * Implementation independent aggregate root.
   */
-case class AirbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: Option[DateTime])
+case class AirbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: DateTime)
 
 object AirbnbUser {
 
@@ -27,7 +27,7 @@ object AirbnbUser {
       about.successNel[String]
   }
 
-  def airbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: Option[DateTime]): NonEmptyList[String] \/ AirbnbUser = {
+  def airbnbUser(id: Long, firstName: String, about: String, document: Json, createdAt: DateTime, updatedAt: DateTime): NonEmptyList[String] \/ AirbnbUser = {
     val result = validateFirstName(firstName) |@|
       validateAbout(about)
 

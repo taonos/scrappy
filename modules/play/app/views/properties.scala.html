@@ -1,0 +1,19 @@
+@import com.airbnbData.model.query.Property
+@(properties: Seq[Property])
+
+@main("Properties") {
+    <h2>Property</h2>
+
+    <table>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+        </tr>
+        @for(property <- properties) {
+            <tr>
+                <th>@property.detail.id</th>
+                <th>@property.detail.name</th>
+            </tr>
+        }
+    </table>
+}

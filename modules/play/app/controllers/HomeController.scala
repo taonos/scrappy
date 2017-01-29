@@ -17,7 +17,8 @@ class HomeController @Inject() (userService: UserService[User], userRepository: 
   def index = Action.async {
     logger.info("Calling index")
     userService
-      .list((userRepository, ec))
+      .list
+      .run((userRepository, ec))
       .map { users =>
         logger.info(s"Calling index: users = ${users}")
         Ok(views.html.index(users))
