@@ -231,7 +231,7 @@ class WSAirbnbScrapRepositoryInterpreter extends AirbnbScrapRepository {
           .fromAsyncStateAction[Option[Pagination], Seq[Long]] { _ => a }(Some(Pagination(0, -1)))
           .takeWhile(_.nonEmpty)
           .dump("index page")
-          .doOnComplete(println("End of fethcing ids"))
+//          .doOnComplete({ println("End of fethcing ids")})
       }
 
   private def fetchPropertyDetailTask(ids: Seq[Long]): Kleisli[Task, WSClient, List[Option[PropertyAndAirbnbUserCommand]]] = {

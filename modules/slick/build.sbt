@@ -4,10 +4,10 @@ import slick.{ model => m }
 lazy val slickPgVersion = "0.15.0-M3"
 lazy val slickVersion = "3.2.0-M2"
 lazy val scalazVersion = "7.2.8"
-lazy val playVersion = "2.5.10"
+lazy val playVersion = "2.5.12"
 lazy val circeVersion = "0.6.1"
-lazy val http4sVersion = "0.15.0a"
-lazy val monixVersion = "2.1.1"
+lazy val http4sVersion = "0.15.3a"
+lazy val monixVersion = "2.2.1"
 lazy val shapelessVersion = "2.3.2"
 
 libraryDependencies ++=
