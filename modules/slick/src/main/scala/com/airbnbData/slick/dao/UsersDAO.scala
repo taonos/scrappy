@@ -1,6 +1,6 @@
 package com.airbnbData.slick.dao
 
-import com.airbnbData.slick.dao.helper.{DTO, Profile}
+import com.airbnbData.slick.dao.helper.Profile
 
 /**
   * Created by Lance on 2016-10-11.
@@ -18,7 +18,7 @@ trait UsersDAO { self: Profile =>
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz), Default(None) */
   case class UsersRow(id: java.util.UUID, email: String, createdAt: DateTime, updatedAt: Option[DateTime] = None)
-    extends DTO
+
   /** GetResult implicit for fetching UsersRow objects using plain SQL queries */
   implicit def getResultUsersRow(implicit e0: GR[java.util.UUID], e1: GR[String], e2: GR[DateTime], e3: GR[Option[DateTime]]): GR[UsersRow] = GR{
     prs => import prs._

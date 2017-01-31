@@ -11,7 +11,7 @@ import monix.reactive.Observable
 /**
   * An implementation dependent DAO.  This could be implemented by Slick, Cassandra, or a REST API.
   */
-trait PropertyRepository extends Repository {
+trait PropertyRepository extends Repository with CloseDatabase {
 
   type Dependencies = DatabaseDef
   type TaskOp[A] = Kleisli[Task, Dependencies, A]
@@ -30,6 +30,4 @@ trait PropertyRepository extends Repository {
     bulkCreate(_).mapT[Observable, Int](Observable.fromTask)
 
   def deleteAll(): TaskOp[Int]
-
-  def close(): TaskOp[Unit]
 }

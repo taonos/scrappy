@@ -8,7 +8,7 @@ import scalaz._
 /**
   * An implementation dependent Repository.  This could be implemented by Slick, Cassandra, or a REST API.
   */
-trait AirbnbUserRepository extends Repository {
+trait AirbnbUserRepository {
 
   def all: Future[\/[NonEmptyList[String], Seq[AirbnbUser]]]
 

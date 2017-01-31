@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * An implementation dependent Repository.  This could be implemented by Slick, Cassandra, or a REST API.
   */
-trait UserRepository extends Repository {
+trait UserRepository {
 
   def lookup(id: UUID)(implicit ec: UserRepositoryExecutionContext): Future[Option[User]]
 

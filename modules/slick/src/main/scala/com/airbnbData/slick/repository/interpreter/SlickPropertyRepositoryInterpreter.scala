@@ -1,31 +1,72 @@
 package com.airbnbData.slick.repository.interpreter
 
 import scalaz.Kleisli
-import com.airbnbData.model._
 import com.airbnbData.model.command.{AirbnbUserCommand, PropertyAndAirbnbUserCommand, PropertyDetailCommand}
 import com.airbnbData.model.query.{AirbnbUser, Property, PropertyDetail}
 import com.airbnbData.repository.PropertyRepository
-import com.airbnbData.slick.dao.helper.{DTO, MyPostgresDriver, Profile}
+import com.airbnbData.slick.dao.helper.{MyPostgresDriver, Profile}
 import com.airbnbData.slick.dao.{AirbnbUsersDAO, PropertiesDAO}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
+import slick.basic.DatabasePublisher
 import slick.jdbc.JdbcBackend.DatabaseDef
-
-import scala.util.{Failure, Success}
+import com.airbnbData.slick.dao.helper.DBExecutor.implicits._
 
 
 /**
   * Created by Lance on 2016-11-18.
   */
 
-class SlickPropertyRepositoryInterpreter
-  extends PropertyRepository with Profile with AirbnbUsersDAO with PropertiesDAO {
+class SlickPropertyRepositoryInterpreter extends PropertyRepository with Profile with PropertiesDAO {
 
-  // Use the custom postgresql driver.
-  override val profile: MyPostgresDriver = MyPostgresDriver
+  val profile: MyPostgresDriver = MyPostgresDriver
 
   import profile.api._
+
+  import com.airbnbData.model.command.Command
+  import com.airbnbData.model.query.Query
+  trait CommandMapper[C <: Command, DTOType <: com.airbnbData.slick.dao.helper.DTO[_]] {
+    def convert(command: C): DTOType
+  }
+
+  trait QueryMapper[DTOType <: com.airbnbData.slick.dao.helper.DTO[_], Q <: Query] {
+    def convert(dto: DTOType): Q
+  }
+
+  object Test extends CommandMapper[PropertyAndAirbnbUserCommand, PropertiesDAO.UserAndProperty] {
+
+    import shapeless._
+    import shapeless.record._
+    import shapeless.ops.record._
+    import shapeless.ops.hlist
+    import shapeless.syntax.singleton._
+    import org.joda.time.DateTime
+
+    private case class Timestamp(createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now())
+
+    private object Timestamp {
+
+      implicit val gen = LabelledGeneric[Timestamp]
+    }
+
+    def convert(property: PropertyAndAirbnbUserCommand): PropertiesDAO.UserAndProperty = {
+      val airbnbUsersRow = LabelledGeneric[AirbnbUsersRow].from(
+        LabelledGeneric[AirbnbUserCommand].to(property.belongsTo) ++
+          Timestamp.gen.to(Timestamp())
+      )
+
+      val propertiesRow = LabelledGeneric[PropertiesRow].from(
+        LabelledGeneric[PropertyDetailCommand].to(property.property) ++
+          Timestamp.gen.to(Timestamp()) +
+          ('airbnbUserId ->> property.belongsTo.id)
+      )
+
+      PropertiesDAO.UserAndProperty(airbnbUsersRow, propertiesRow)
+    }
+  }
+
+  object Y extends QueryMapper[PropertiesDAO.UserAndProperty, ]
 
   private object Mapper {
     import shapeless._
@@ -42,7 +83,7 @@ class SlickPropertyRepositoryInterpreter
       implicit val gen = LabelledGeneric[Timestamp]
     }
 
-    def convert(property: PropertyAndAirbnbUserCommand): (PropertiesRow, AirbnbUsersRow) = {
+    def convert(property: PropertyAndAirbnbUserCommand): PropertiesDAO.UserAndProperty = {
       val airbnbUsersRow = LabelledGeneric[AirbnbUsersRow].from(
         LabelledGeneric[AirbnbUserCommand].to(property.belongsTo) ++
           Timestamp.gen.to(Timestamp())
@@ -54,102 +95,84 @@ class SlickPropertyRepositoryInterpreter
           ('airbnbUserId ->> property.belongsTo.id)
       )
 
-      (propertiesRow, airbnbUsersRow)
+      PropertiesDAO.UserAndProperty(airbnbUsersRow, propertiesRow)
     }
 
-    def convert(propertiesRow: PropertiesRow, airbnbUsersRow: AirbnbUsersRow): Property = {
-      val detail = PropertyDetail(
-        propertiesRow.id,
-        propertiesRow.bathrooms,
-        propertiesRow.bedrooms,
-        propertiesRow.beds,
-        propertiesRow.city,
-        propertiesRow.name,
-        propertiesRow.personCapacity,
-        propertiesRow.propertyType,
-        propertiesRow.publicAddress,
-        propertiesRow.roomType,
-        propertiesRow.document,
-        propertiesRow.summary,
-        propertiesRow.address,
-        propertiesRow.description,
-        propertiesRow.airbnbUrl,
-        propertiesRow.createdAt,
-        propertiesRow.updatedAt
-      )
-      val user = AirbnbUser(
-        airbnbUsersRow.id,
-        airbnbUsersRow.firstName,
-        airbnbUsersRow.about,
-        airbnbUsersRow.document,
-        airbnbUsersRow.createdAt,
-        airbnbUsersRow.updatedAt
-      )
-      Property(detail, user)
-    }
-  }
+    def convert(userAndProperty: PropertiesDAO.UserAndProperty): Property = {
+      val property = userAndProperty.property
+      val user = userAndProperty.user
 
-  private def insert(property: PropertyAndAirbnbUserCommand): DBIO[Int] = {
-    val (prop, user) = Mapper.convert(property)
-    for {
-      _ <- AirbnbUsers insertOrUpdate user
-      _ <- Properties insertOrUpdate prop
-    } yield 1
+      val propertyDetail = PropertyDetail(
+        property.id,
+        property.bathrooms,
+        property.bedrooms,
+        property.beds,
+        property.city,
+        property.name,
+        property.personCapacity,
+        property.propertyType,
+        property.publicAddress,
+        property.roomType,
+        property.document,
+        property.summary,
+        property.address,
+        property.description,
+        property.airbnbUrl,
+        property.createdAt,
+        property.updatedAt
+      )
+      val userDetail = AirbnbUser(
+        user.id,
+        user.firstName,
+        user.about,
+        user.document,
+        user.createdAt,
+        user.updatedAt
+      )
+
+      Property(propertyDetail, userDetail)
+    }
   }
 
   override def all(): ObservableOp[Property] = {
     Kleisli { db =>
-
-      val query = for {
-        props <- Properties
-        users <- props.airbnbUserFk
-      } yield (props, users)
-
-      val result = db.stream(query.result)
-
-      Observable.fromReactivePublisher(result)
-        .map { case (prop, user) => Mapper.convert(prop, user) }
+      Observable.fromReactivePublisher(db.stream(PropertiesDAO.streamingGetAll))
+        .map { case (prop, user) => Mapper.convert(PropertiesDAO.UserAndProperty(user, prop)) }
     }
   }
 
   override def create(property: PropertyAndAirbnbUserCommand): TaskOp[Int] =
     Kleisli { db =>
-      Task.defer {
-        Task.fromFuture(
-          db.run(
-            insert(property).transactionally
-          )
+      Task.defer { Task.fromFuture(
+        db.run(
+          PropertiesDAO.insertOrUpdate(Mapper.convert(property))
         )
-      }
+      )}
     }
 
   override def bulkCreate(list: Seq[PropertyAndAirbnbUserCommand]): TaskOp[Int] = {
     Kleisli { db =>
-      Task.defer {
-        Task
-          .fromFuture(
-            db.run(
-              DBIO.sequence(
-                list.map(insert(_).transactionally)
-              )
-            )
-          )
-      }
-        .map(_.sum)
+      Task.defer { Task.fromFuture(
+        db.run(
+          PropertiesDAO.bulkInsertOrUpdate(list.map(Mapper.convert))
+        )
+      )}
     }
   }
 
   override def deleteAll(): TaskOp[Int] = {
     Kleisli { db =>
-
-      val deletion = Properties.delete andThen AirbnbUsers.delete
+      val deletion = PropertiesDAO.deleteAll
 
       Task.defer { Task.fromFuture(db.run(deletion)) }
     }
   }
+}
 
-  override def close(): TaskOp[Unit] =
-    Kleisli { db =>
-      Task { db.close() }
-    }
+import scala.concurrent.Future
+import scala.language.implicitConversions
+
+object FutureOp {
+  implicit def futureToMonixTask[T](future: Future[T]): Task[T] =
+    Task.defer { Task.fromFuture(future) }
 }

@@ -1,11 +1,18 @@
 package com.airbnbData.slick.dao
 
-import com.airbnbData.slick.dao.helper.{DTO, Profile}
+import java.net.URL
+
+import com.airbnbData.slick.dao.helper._
+import io.circe.Json
+import org.joda.time.DateTime
+import slick.ast.BaseTypedType
+import slick.lifted.ForeignKeyQuery
 import slick.sql.SqlProfile.ColumnOption.SqlType
 
 /**
   * Created by Lance on 2016-10-12.
   */
+
 trait PropertiesDAO extends AirbnbUsersDAO { self: Profile =>
   import java.net.URL
   import com.vividsolutions.jts.geom.Point
@@ -36,8 +43,8 @@ trait PropertiesDAO extends AirbnbUsersDAO { self: Profile =>
     *  @param createdAt Database column created_at SqlType(timestamptz)
     *  @param updatedAt Database column updated_at SqlType(timestamptz)
     *  @param airbnbUserId Database column airbnb_user_id SqlType(int8) */
-  case class PropertiesRow(id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: Json, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now(), airbnbUserId: Long)
-    extends DTO
+  case class PropertiesRow(override val id: Long, bathrooms: Int = 0, bedrooms: Int = 0, beds: Int = 0, city: String, name: String, personCapacity: Int = 0, propertyType: String, publicAddress: String, roomType: String, document: Json, summary: String, address: String, description: String, airbnbUrl: URL, createdAt: DateTime = DateTime.now(), updatedAt: DateTime = DateTime.now(), airbnbUserId: Long)
+    extends DTO[Long]
 
   /** GetResult implicit for fetching PropertyRow objects using plain SQL queries */
   implicit def getResultPropertiesRow(implicit e0: GR[Long], e1: GR[Int], e2: GR[String], e3: GR[Json], e4: GR[URL], e5: GR[DateTime]): GR[PropertiesRow] = GR{
@@ -45,7 +52,7 @@ trait PropertiesDAO extends AirbnbUsersDAO { self: Profile =>
       PropertiesRow.tupled((<<[Long], <<[Int], <<[Int], <<[Int], <<[String], <<[String], <<[Int], <<[String], <<[String], <<[String], <<[Json], <<[String], <<[String], <<[String], <<[URL], <<[DateTime], <<[DateTime], <<[Long]))
   }
   /** Table description of table properties. Objects of this class serve as prototypes for rows in queries. */
-  protected class PropertiesTable(_tableTag: Tag) extends Table[PropertiesRow](_tableTag, "properties") {
+  protected class PropertiesTable(_tableTag: Tag) extends Table[PropertiesRow](_tableTag, "properties") with Keyed[Long] {
     def * = (id, bathrooms, bedrooms, beds, city, name, personCapacity, propertyType, publicAddress, roomType, document, summary, address, description, airbnbUrl, createdAt, updatedAt, airbnbUserId) <> (PropertiesRow.tupled, PropertiesRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(bathrooms), Rep.Some(bedrooms), Rep.Some(beds), Rep.Some(city), Rep.Some(name), Rep.Some(personCapacity), Rep.Some(propertyType), Rep.Some(publicAddress), Rep.Some(roomType), Rep.Some(document), Rep.Some(summary), Rep.Some(address), Rep.Some(description), Rep.Some(airbnbUrl), Rep.Some(createdAt), Rep.Some(updatedAt), Rep.Some(airbnbUserId)).shaped.<>({r=>import r._; _1.map(_=> PropertiesRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13.get, _14.get, _15.get, _16.get, _17.get, _18.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
@@ -93,4 +100,37 @@ trait PropertiesDAO extends AirbnbUsersDAO { self: Profile =>
   /** Collection-like TableQuery object for table PropertyTable */
   lazy val Properties = new TableQuery(tag => new PropertiesTable(tag))
 
+  object PropertiesDAO extends DAO[PropertiesTable, PropertiesRow, Long](profile) {
+
+    val tableQuery = Properties
+
+    case class UserAndProperty(user: AirbnbUsersRow, property: PropertiesRow)
+
+    private lazy val joinedQuery = Properties join AirbnbUsers on { case (p, u) => p.airbnbUserId === u.id }
+
+    override def streamingGetAll: StreamingDBIO[Seq[(PropertiesRow, AirbnbUsersRow)], (PropertiesRow, AirbnbUsersRow)] = {
+      joinedQuery.result
+    }
+
+    def insertOrUpdate(row: UserAndProperty): DBIO[Int] = {
+      (for {
+        _ <- AirbnbUsers insertOrUpdate row.user
+        _ <- Properties insertOrUpdate row.property
+      } yield 1).transactionally
+    }
+
+    def bulkInsertOrUpdate(rows: Seq[UserAndProperty]): DBIO[Int] =
+      DBIO
+        .sequence(rows.map(insertOrUpdate))
+        .map(_.sum)
+
+    def insert(row: UserAndProperty): DBIO[Int] =
+      (for {
+        _ <- AirbnbUsers += row.user
+        _ <- Properties += row.property
+      } yield 1).transactionally
+
+    override def deleteAll: DBIO[Int] =
+      AirbnbUsersDAO.deleteAll andThen super.deleteAll
+  }
 }
